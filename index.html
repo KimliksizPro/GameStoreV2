@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-dark': '#161022',
+              'brand-dark-2': '#1C162D',
+              'brand-purple': '#5211d4',
+              'brand-light-purple': '#a492c9',
+              'brand-gray': '#9ca3af',
+              'brand-light-gray': '#4b5563',
+              // New admin colors
+              "primary": "#5211d4",
+              "background-light": "#f6f6f8",
+              "background-dark": "#161022",
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"]
+            },
+             typography: ({ theme }) => ({
+              invert: {
+                css: {
+                  '--tw-prose-body': theme('colors.brand-gray'),
+                  '--tw-prose-headings': theme('colors.white'),
+                  '--tw-prose-lead': theme('colors.brand-light-purple'),
+                  '--tw-prose-links': theme('colors.brand-light-purple'),
+                },
+              },
+            }),
+          },
+        },
+         plugins: [
+            require('@tailwindcss/typography'),
+            require('@tailwindcss/forms'),
+        ],
+      }
+    </script>
+    <style>
+       .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+      html {
+        scroll-behavior: smooth;
+        color-scheme: dark;
+      }
+      body {
+        background-color: #161022;
+      }
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1a102b;
+      }
+      ::-webkit-scrollbar-thumb {
+        background-color: #4b5563;
+        border-radius: 10px;
+        border: 2px solid #1a102b;
+      }
+       ::-webkit-scrollbar-thumb:hover {
+        background-color: #5211d4;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.5s ease-in-out forwards;
+      }
+      .animate-fadeInUp {
+        opacity: 0; /* Start hidden */
+        animation: fadeInUp 0.5s ease-in-out forwards;
+      }
+      .page-transition {
+        animation: fadeIn 0.3s ease-in-out;
+      }
+       @keyframes shimmer {
+        0% {
+          background-position: -1000px 0;
+        }
+        100% {
+          background-position: 1000px 0;
+        }
+      }
+      .animate-shimmer {
+        background: linear-gradient(to right, #161022 8%, #1f1633 18%, #161022 33%);
+        background-size: 2000px 100%;
+        animation: shimmer 1.5s linear infinite;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "date-fns": "https://aistudiocdn.com/date-fns@^4.1.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-background-dark font-display text-white">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
