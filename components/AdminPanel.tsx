@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
-import { Game } from '../types';
+import { Game, User } from '../types';
 import GameManagement from './GameManagement';
 import AdminDashboard from './AdminDashboard';
 import SiteSettingsComponent from './SiteSettings';
 import { SiteSettings } from '../hooks/useSiteSettings';
 import GameAnalyticsDashboard from './GameAnalyticsDashboard';
+import UserManagement from './UserManagement';
 
 interface AdminPanelProps {
   games: Game[];
@@ -15,18 +17,13 @@ interface AdminPanelProps {
   siteSettings: SiteSettings;
   onSaveSettings: (settings: SiteSettings) => void;
   onNavigateHome: () => void;
+  users: User[];
+  currentUser: User | null;
+  onUpdateUser: (user: User) => void;
+  onDeleteUser: (userId: string) => void;
 }
 
 type AdminTab = 'dashboard' | 'games' | 'users' | 'analytics' | 'settings';
-
-const DisabledFeature: React.FC<{title: string}> = ({ title }) => (
-    <div className="relative p-8 h-full flex flex-col items-center justify-center text-center bg-brand-dark-2 rounded-lg animate-fadeIn border border-gray-800 overflow-hidden">
-        <div className="relative z-10">
-            <h2 className="text-2xl font-bold">{title}</h2>
-            <p className="text-brand-light-purple mt-2 mb-6">This feature is a visual mockup and is not yet implemented.</p>
-        </div>
-    </div>
-);
 
 const AdminPanel: React.FC<AdminPanelProps> = (props) => {
     const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
@@ -43,7 +40,12 @@ const AdminPanel: React.FC<AdminPanelProps> = (props) => {
                           onDeleteGame={props.onDeleteGame}
                         />;
             case 'users':
-                return <DisabledFeature title="User Management" />;
+                return <UserManagement 
+                          users={props.users}
+                          currentUser={props.currentUser}
+                          onUpdateUser={props.onUpdateUser}
+                          onDeleteUser={props.onDeleteUser}
+                        />;
             case 'analytics':
                  return <GameAnalyticsDashboard />;
             case 'settings':
@@ -61,10 +63,10 @@ const AdminPanel: React.FC<AdminPanelProps> = (props) => {
             <aside className="flex w-64 flex-col bg-[#1C162D] p-4 border-r border-gray-800">
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3">
-                         <img src="https://w7.pngwing.com/pngs/340/946/png-transparent-avatar-user-computer-icons-software-developer-avatar-child-face-heroes.png" alt="Admin Avatar" className="size-10 rounded-full object-cover" />
+                         <img src={props.currentUser?.avatarUrl} alt="Admin Avatar" className="size-10 rounded-full object-cover" />
                         <div className="flex flex-col">
-                            <h1 className="text-white text-base font-medium leading-normal">Semih Topak</h1>
-                            <p className="text-[#a492c9] text-sm font-normal leading-normal">Admin</p>
+                            <h1 className="text-white text-base font-medium leading-normal">{props.currentUser?.username}</h1>
+                            <p className="text-[#a492c9] text-sm font-normal leading-normal capitalize">{props.currentUser?.role}</p>
                         </div>
                     </div>
                     <nav className="flex flex-col gap-2 mt-4">

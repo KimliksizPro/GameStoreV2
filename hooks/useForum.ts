@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { ForumTopic, ForumComment } from '../types';
 import { initialTopics } from '../data/forum';
@@ -9,8 +10,7 @@ export const useForum = () => {
   const [loading, setLoading] = useState(true);
 
   // Fetch initial data from the remote JSON store
-  useEffect(() => {
-    const fetchTopics = async () => {
+  const fetchTopics = useCallback(async () => {
       try {
         const response = await fetch(API_ENDPOINT);
         if (!response.ok) {
@@ -23,6 +23,8 @@ export const useForum = () => {
         } else {
            console.warn("Fetched data is not an array or is empty, falling back to initial data.");
            setTopics(initialTopics);
+           // Initialize remote with initial data if it's empty
+           await updateRemoteTopics(initialTopics);
         }
       } catch (error) {
         console.error('Failed to fetch topics, falling back to initial data:', error);
@@ -30,10 +32,11 @@ export const useForum = () => {
       } finally {
         setLoading(false);
       }
-    };
+    }, []);
 
+  useEffect(() => {
     fetchTopics();
-  }, []);
+  }, [fetchTopics]);
 
   // Function to update the remote JSON store
   const updateRemoteTopics = useCallback(async (updatedTopics: ForumTopic[]) => {

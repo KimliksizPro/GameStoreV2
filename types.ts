@@ -1,3 +1,12 @@
+
+export interface User {
+  id: string;
+  username: string;
+  password: string;
+  avatarUrl: string;
+  role: 'admin' | 'user';
+}
+
 export interface Game {
   id: string;
   title: string;
@@ -17,7 +26,8 @@ export interface Game {
 
 export interface ForumComment {
   id: string;
-  author: string;
+  authorId: string;
+  authorName: string;
   avatarUrl: string;
   content: string;
   createdAt: string;
@@ -26,7 +36,8 @@ export interface ForumComment {
 export interface ForumTopic {
   id: string;
   title: string;
-  author: string;
+  authorId: string;
+  authorName: string;
   avatarUrl: string;
   content: string;
   createdAt: string;

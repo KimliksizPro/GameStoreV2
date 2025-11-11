@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -5,21 +6,21 @@ import GameSection from './components/GameSection';
 import Footer from './components/Footer';
 import GameDetail from './components/GameDetail';
 import AdminPanel from './components/AdminPanel';
-import AdminLogin from './components/AdminLogin';
 import RequestGame from './components/RequestGame';
 import BackToTopButton from './components/BackToTopButton';
 import GameCardSkeleton from './components/GameCardSkeleton';
 import ForumPage from './components/ForumPage';
 import TopicDetail from './components/TopicDetail';
-import UserProfileModal from './components/UserProfileModal';
+import LoginModal from './components/LoginModal';
+import SignupModal from './components/SignupModal';
 import TopicModal from './components/TopicModal';
 import { useGames } from './hooks/useGames';
 import { useSiteSettings, SiteSettings } from './hooks/useSiteSettings';
 import { useForum } from './hooks/useForum';
-import { useUserProfile, UserProfile } from './hooks/useUserProfile';
+import { useAuth } from './hooks/useAuth';
 import { ToastProvider, useToast } from './hooks/useToast';
 import ToastContainer from './components/ToastContainer';
-import { Game, ForumTopic, ForumComment } from './types';
+import { Game, ForumTopic, ForumComment, User } from './types';
 
 
 type View = {
@@ -46,19 +47,21 @@ const AppContent: React.FC = () => {
   const { games, loading: gamesLoading, addGame, updateGame, deleteGame, getGameById } = useGames();
   const { settings, loading: settingsLoading, updateSettings } = useSiteSettings();
   const { topics, loading: forumLoading, getTopicById, addTopic, updateTopic, addComment, deleteTopic } = useForum();
-  const { profile, isProfileSet, saveProfile } = useUserProfile();
+  const { currentUser, users, login, signup, logout, loadingAuth, updateUser, deleteUser } = useAuth();
   const [view, setView] = useState<View>({ page: 'home', id: null });
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [showAllGames, setShowAllGames] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [topicToEdit, setTopicToEdit] = useState<ForumTopic | null>(null);
   const { showToast } = useToast();
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
 
-  const loading = gamesLoading || settingsLoading || forumLoading;
+  const loading = gamesLoading || settingsLoading || forumLoading || loadingAuth;
 
   useEffect(() => {
     if (!headerRef.current) return;
@@ -78,7 +81,6 @@ const AppContent: React.FC = () => {
     // This is for the main site theme, not the new admin panel theme
     const rootStyle = document.documentElement.style;
     const colors = themeColorMap[settings.themeColor] || themeColorMap.purple;
-    const oldPurple = `rgb(${colors['--color-brand-purple']})`;
     const body = document.querySelector('body');
     if (body && view.page !== 'admin') {
        body.style.backgroundColor = '#161022'; // Keep default dark for admin
@@ -95,7 +97,16 @@ const AppContent: React.FC = () => {
 
   const navigateToHome = () => setView({ page: 'home' });
   const navigateToGame = (id: string) => setView({ page: 'game', id });
-  const navigateToAdmin = () => setView({ page: 'admin' });
+  const navigateToAdmin = () => {
+    if (currentUser?.role === 'admin') {
+      setView({ page: 'admin' });
+    } else if (!currentUser) {
+      showToast('You must be logged in as an admin to access this page.', 'error');
+      setIsLoginModalOpen(true);
+    } else {
+      showToast('You do not have permission to access the admin panel.', 'error');
+    }
+  };
   const navigateToRequestGame = () => setView({ page: 'request' });
   const navigateToForum = () => setView({ page: 'forum' });
   const navigateToTopic = (id: string) => setView({ page: 'topic', id });
@@ -112,21 +123,30 @@ const AppContent: React.FC = () => {
     navigateToHome();
   };
 
-  const handleLogin = (password: string): boolean => {
-    if (password === 'semih1828') {
-      setIsAdminAuthenticated(true);
-      showToast('Login successful. Welcome!', 'success');
-      return true;
+  const handleUserLogin = (username: string, password: string):boolean => {
+    const user = login(username, password);
+    if(user) {
+        showToast(`Welcome back, ${user.username}!`, 'success');
+        return true;
     }
-    showToast('Incorrect password.', 'error');
-    return false;
+    return false; // Error message is shown in modal
   };
 
-  const handleLogout = () => {
-    setIsAdminAuthenticated(false);
-    navigateToHome();
+  const handleUserSignup = async (username: string, password: string, avatarUrl: string) => {
+    const result = await signup(username, password, avatarUrl);
+    showToast(result.message, result.success ? 'success' : 'error');
+    return result;
+  };
+
+  const handleUserLogout = () => {
+    const wasAdmin = currentUser?.role === 'admin';
+    logout();
+    if (wasAdmin && view.page === 'admin') {
+      navigateToHome();
+    }
     showToast('You have been logged out.', 'info');
   };
+
 
   const handleAddGame = (game: Omit<Game, 'id'>) => {
     addGame(game);
@@ -153,19 +173,30 @@ const AppContent: React.FC = () => {
     showToast('Site settings updated successfully!', 'success');
   };
   
-  const handleSaveProfile = (name: string, avatarUrl: string) => {
-    saveProfile(name, avatarUrl);
-    setIsProfileModalOpen(false);
-    showToast(`Profile saved! Welcome, ${name}.`, 'success');
-  };
-
   const handleOpenEditTopicModal = (topic: ForumTopic) => {
+     if (!currentUser) {
+        setIsLoginModalOpen(true);
+        return;
+    }
+    if (topic.authorId !== currentUser.id && currentUser.role !== 'admin') {
+        showToast("You can only edit your own topics.", "error");
+        return;
+    }
     setTopicToEdit(topic);
     setIsTopicModalOpen(true);
   };
 
-  const handleAddTopic = (topicData: Omit<ForumTopic, 'id' | 'comments' | 'createdAt'>) => {
-    const newTopicId = addTopic(topicData);
+  const handleAddTopic = (data: { title: string; content: string }) => {
+    if (!currentUser) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+    const newTopicId = addTopic({
+      ...data,
+      authorId: currentUser.id,
+      authorName: currentUser.username,
+      avatarUrl: currentUser.avatarUrl,
+    });
     showToast('Topic created successfully!', 'success');
     setIsTopicModalOpen(false);
     navigateToTopic(newTopicId);
@@ -189,8 +220,13 @@ const AppContent: React.FC = () => {
         showToast('Error: Topic not found.', 'error');
         return;
     }
+    if (!currentUser) {
+        showToast('You must be logged in to delete topics.', 'error');
+        setIsLoginModalOpen(true);
+        return;
+    }
     // Authorization check
-    if (topic.author !== profile.name && !isAdminAuthenticated) {
+    if (topic.authorId !== currentUser.id && currentUser.role !== 'admin') {
         showToast('You can only delete your own topics.', 'error');
         return;
     }
@@ -208,15 +244,28 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleUpdateUser = (updatedUser: User) => {
+    updateUser(updatedUser).then(success => {
+      if (success) {
+        showToast(`User "${updatedUser.username}" updated successfully.`, 'success');
+      } else {
+        showToast('Failed to update user.', 'error');
+      }
+    });
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    deleteUser(userId).then(success => {
+      if (success) {
+        showToast('User deleted successfully.', 'success');
+      } else {
+        showToast('Failed to delete user.', 'error');
+      }
+    });
+  };
+
   const featuredGames = useMemo(() => games.filter(g => g.featured), [games]);
   
-  const newReleasesGames = useMemo(() => 
-    [...games]
-        .sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
-        .slice(0, 10),
-    [games]
-  );
-
   const allGamesSorted = useMemo(() => [...games].sort((a, b) => a.title.localeCompare(b.title)), [games]);
   
   const savaşOyunları = useMemo(() => games.filter(g => g.category === 'Savaş Oyunları'), [games]);
@@ -236,16 +285,25 @@ const AppContent: React.FC = () => {
   }, [searchQuery, games]);
   
   if (view.page === 'admin') {
-     if (!isAdminAuthenticated) return <div className="min-h-screen flex items-center justify-center"><AdminLogin onLogin={handleLogin} /></div>;
+     if (currentUser?.role !== 'admin') {
+       // This should be handled by navigateToAdmin, but as a fallback:
+       showToast('Access denied.', 'error');
+       navigateToHome();
+       return null;
+     }
       return <AdminPanel 
         games={games} 
         onAddGame={handleAddGame} 
         onUpdateGame={handleUpdateGame} 
         onDeleteGame={handleDeleteGame} 
-        onLogout={handleLogout}
+        onLogout={handleUserLogout}
         siteSettings={settings}
         onSaveSettings={handleSaveSettings}
         onNavigateHome={navigateToHome}
+        users={users}
+        currentUser={currentUser}
+        onUpdateUser={handleUpdateUser}
+        onDeleteUser={handleDeleteUser}
       />;
   }
 
@@ -302,12 +360,10 @@ const AppContent: React.FC = () => {
                   topics={topics} 
                   onTopicClick={navigateToTopic} 
                   onOpenCreateTopic={() => { setTopicToEdit(null); setIsTopicModalOpen(true); }}
-                  profile={profile}
-                  isProfileSet={isProfileSet}
-                  onRequestProfileSetup={() => setIsProfileModalOpen(true)}
+                  currentUser={currentUser}
+                  onRequestLogin={() => setIsLoginModalOpen(true)}
                   onDeleteTopic={handleDeleteTopic}
                   onEditTopic={handleOpenEditTopicModal}
-                  isAdmin={isAdminAuthenticated}
                 />;
       case 'topic':
         const topic = getTopicById(view.id || '');
@@ -315,12 +371,10 @@ const AppContent: React.FC = () => {
                             topic={topic} 
                             onAddComment={handleAddComment} 
                             onBack={navigateToForum}
-                            profile={profile}
-                            isProfileSet={isProfileSet}
-                            onRequestProfileSetup={() => setIsProfileModalOpen(true)}
+                            currentUser={currentUser}
+                            onRequestLogin={() => setIsLoginModalOpen(true)}
                             onDeleteTopic={handleDeleteTopic}
                             onEditTopic={handleOpenEditTopicModal}
-                            isAdmin={isAdminAuthenticated}
                           />;
         // If topic not found, navigate back to forum list
         navigateToForum();
@@ -338,7 +392,7 @@ const AppContent: React.FC = () => {
     }
   };
 
-  if (settings.maintenanceMode && !isAdminAuthenticated) {
+  if (settings.maintenanceMode && currentUser?.role !== 'admin') {
     return (
         <div className="bg-brand-dark-2 text-white min-h-screen font-sans flex flex-col items-center justify-center text-center p-8">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-brand-purple mb-6">
@@ -364,19 +418,33 @@ const AppContent: React.FC = () => {
           onNavigateForum={navigateToForum}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          profile={profile}
-          onProfileClick={() => setIsProfileModalOpen(true)}
+          currentUser={currentUser}
+          onLoginClick={() => setIsLoginModalOpen(true)}
+          onSignupClick={() => setIsSignupModalOpen(true)}
+          onLogout={handleUserLogout}
         />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ paddingTop: `${headerHeight}px` }}>
         <div key={view.page + (view.id || '')} className="page-transition py-12">
           {renderMainContent()}
         </div>
       </main>
-      <UserProfileModal 
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        onSave={handleSaveProfile}
-        currentProfile={profile}
+      <LoginModal 
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLogin={handleUserLogin}
+        onSwitchToSignup={() => {
+            setIsLoginModalOpen(false);
+            setIsSignupModalOpen(true);
+        }}
+      />
+       <SignupModal 
+        isOpen={isSignupModalOpen}
+        onClose={() => setIsSignupModalOpen(false)}
+        onSignup={handleUserSignup}
+        onSwitchToLogin={() => {
+            setIsSignupModalOpen(false);
+            setIsLoginModalOpen(true);
+        }}
       />
       <TopicModal
           isOpen={isTopicModalOpen}
@@ -388,11 +456,12 @@ const AppContent: React.FC = () => {
               if (topicToEdit) {
                   handleUpdateTopic(topicToEdit.id, data);
               } else {
-                  handleAddTopic({
-                      ...data,
-                      author: profile.name,
-                      avatarUrl: profile.avatarUrl
-                  });
+                if(currentUser){
+                  handleAddTopic(data);
+                } else {
+                  showToast('You must be logged in to create a topic.', 'error');
+                  setIsLoginModalOpen(true);
+                }
               }
           }}
           initialData={topicToEdit ? { title: topicToEdit.title, content: topicToEdit.content } : undefined}

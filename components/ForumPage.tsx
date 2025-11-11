@@ -1,6 +1,6 @@
+
 import React from 'react';
-import { ForumTopic } from '../types';
-import { UserProfile } from '../hooks/useUserProfile';
+import { ForumTopic, User } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 
 interface TopicCardProps {
@@ -19,11 +19,11 @@ const TopicCard: React.FC<TopicCardProps> = ({ topic, onClick, onDelete, onEdit,
       onClick={onClick}
       className="bg-brand-dark border border-gray-800 rounded-lg p-5 flex items-start gap-4 cursor-pointer transition-all duration-300 hover:border-brand-purple hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-purple/20"
     >
-      <img src={topic.avatarUrl} alt={topic.author} className="w-12 h-12 rounded-full flex-shrink-0 mt-1 object-cover" />
+      <img src={topic.avatarUrl} alt={topic.authorName} className="w-12 h-12 rounded-full flex-shrink-0 mt-1 object-cover" />
       <div className="flex-grow">
         <h3 className="font-bold text-lg text-white mb-1 group-hover:text-brand-light-purple">{topic.title}</h3>
         <p className="text-sm text-brand-gray">
-          by <span className="font-semibold text-brand-light-purple">{topic.author}</span> • {timeAgo}
+          by <span className="font-semibold text-brand-light-purple">{topic.authorName}</span> • {timeAgo}
         </p>
       </div>
       <div className="text-right flex-shrink-0 flex items-center gap-1">
@@ -61,21 +61,19 @@ interface ForumPageProps {
   topics: ForumTopic[];
   onTopicClick: (id: string) => void;
   onOpenCreateTopic: () => void;
-  profile: UserProfile;
-  isProfileSet: boolean;
-  onRequestProfileSetup: () => void;
+  currentUser: User | null;
+  onRequestLogin: () => void;
   onDeleteTopic: (id: string) => void;
   onEditTopic: (topic: ForumTopic) => void;
-  isAdmin: boolean;
 }
 
-const ForumPage: React.FC<ForumPageProps> = ({ topics, onTopicClick, onOpenCreateTopic, profile, isProfileSet, onRequestProfileSetup, onDeleteTopic, onEditTopic, isAdmin }) => {
+const ForumPage: React.FC<ForumPageProps> = ({ topics, onTopicClick, onOpenCreateTopic, currentUser, onRequestLogin, onDeleteTopic, onEditTopic }) => {
   
   const handleCreateClick = () => {
-    if (isProfileSet) {
+    if (currentUser) {
       onOpenCreateTopic();
     } else {
-      onRequestProfileSetup();
+      onRequestLogin();
     }
   };
 
@@ -99,7 +97,7 @@ const ForumPage: React.FC<ForumPageProps> = ({ topics, onTopicClick, onOpenCreat
 
       <div className="space-y-4">
         {sortedTopics.map((topic, index) => {
-           const canModify = profile.name === topic.author || isAdmin;
+           const canModify = currentUser?.id === topic.authorId || currentUser?.role === 'admin';
            return (
              <div key={topic.id} className="animate-fadeInUp" style={{ animationDelay: `${index * 50}ms`}}>
                <TopicCard

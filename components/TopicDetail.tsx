@@ -1,29 +1,28 @@
+
 import React, { useState } from 'react';
-import { ForumTopic, ForumComment } from '../types';
-import { UserProfile } from '../hooks/useUserProfile';
+import { ForumTopic, ForumComment, User } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '../hooks/useToast';
+import { availableAvatars } from '../data/avatars';
 
 interface TopicDetailProps {
   topic: ForumTopic;
   onAddComment: (topicId: string, commentData: Omit<ForumComment, 'id' | 'createdAt'>) => void;
   onBack: () => void;
-  profile: UserProfile;
-  isProfileSet: boolean;
-  onRequestProfileSetup: () => void;
+  currentUser: User | null;
+  onRequestLogin: () => void;
   onDeleteTopic: (topicId: string) => void;
   onEditTopic: (topic: ForumTopic) => void;
-  isAdmin: boolean;
 }
 
 const CommentCard: React.FC<{ comment: ForumComment }> = ({ comment }) => {
   const timeAgo = formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true });
   return (
     <div className="flex items-start gap-4 p-4 bg-brand-dark-2/50 rounded-lg border border-gray-800/50">
-      <img src={comment.avatarUrl} alt={comment.author} className="w-10 h-10 rounded-full flex-shrink-0 mt-1 object-cover" />
+      <img src={comment.avatarUrl} alt={comment.authorName} className="w-10 h-10 rounded-full flex-shrink-0 mt-1 object-cover" />
       <div className="flex-grow">
         <div className="flex items-baseline gap-3">
-          <p className="font-semibold text-white">{comment.author}</p>
+          <p className="font-semibold text-white">{comment.authorName}</p>
           <p className="text-xs text-brand-gray">{timeAgo}</p>
         </div>
         <p className="text-brand-light-purple mt-1">{comment.content}</p>
@@ -33,22 +32,23 @@ const CommentCard: React.FC<{ comment: ForumComment }> = ({ comment }) => {
 };
 
 
-const TopicDetail: React.FC<TopicDetailProps> = ({ topic, onAddComment, onBack, profile, isProfileSet, onRequestProfileSetup, onDeleteTopic, onEditTopic, isAdmin }) => {
+const TopicDetail: React.FC<TopicDetailProps> = ({ topic, onAddComment, onBack, currentUser, onRequestLogin, onDeleteTopic, onEditTopic }) => {
   const [newComment, setNewComment] = useState('');
   const { showToast } = useToast();
   const timeAgo = formatDistanceToNow(new Date(topic.createdAt), { addSuffix: true });
-  const canModify = profile.name === topic.author || isAdmin;
+  const canModify = currentUser?.id === topic.authorId || currentUser?.role === 'admin';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isProfileSet) {
-      onRequestProfileSetup();
+    if (!currentUser) {
+      onRequestLogin();
       return;
     }
     if (newComment.trim()) {
       onAddComment(topic.id, {
-        author: profile.name,
-        avatarUrl: profile.avatarUrl,
+        authorId: currentUser.id,
+        authorName: currentUser.username,
+        avatarUrl: currentUser.avatarUrl,
         content: newComment,
       });
       setNewComment('');
@@ -115,9 +115,9 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topic, onAddComment, onBack, 
                 </div>
               </div>
               <div className="flex items-center gap-3 border-b border-gray-800 pb-4 mb-4">
-                  <img src={topic.avatarUrl} alt={topic.author} className="w-10 h-10 rounded-full object-cover" />
+                  <img src={topic.avatarUrl} alt={topic.authorName} className="w-10 h-10 rounded-full object-cover" />
                   <div>
-                    <p className="font-semibold text-white">{topic.author}</p>
+                    <p className="font-semibold text-white">{topic.authorName}</p>
                     <p className="text-sm text-brand-gray">{timeAgo}</p>
                   </div>
               </div>
@@ -141,20 +141,22 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topic, onAddComment, onBack, 
             <div className="bg-brand-dark border border-gray-800 rounded-lg p-6">
                <h3 className="text-xl font-bold mb-4">Bir Yanıt Bırak</h3>
                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-start gap-4">
-                 <img src={profile.avatarUrl} alt="Your avatar" className="w-10 h-10 rounded-full hidden sm:block object-cover" />
+                 <img src={currentUser ? currentUser.avatarUrl : availableAvatars[0]} alt="Your avatar" className="w-10 h-10 rounded-full hidden sm:block object-cover" />
                  <div className="flex-grow w-full">
                     <textarea
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Tartışmaya katılın..."
+                      placeholder={currentUser ? "Tartışmaya katılın..." : "Yorum yapmak için giriş yapın..."}
                       required
                       rows={3}
                       className="w-full bg-brand-dark-2 rounded-md p-3 border border-gray-700 focus:ring-brand-purple focus:border-brand-purple transition-colors"
+                      disabled={!currentUser}
                     ></textarea>
                     <div className="text-right mt-3">
                        <button
                         type="submit"
-                        className="bg-brand-purple hover:bg-violet-500 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 ease-in-out hover:scale-105"
+                        className="bg-brand-purple hover:bg-violet-500 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 ease-in-out hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!currentUser}
                       >
                         Yanıtla
                       </button>

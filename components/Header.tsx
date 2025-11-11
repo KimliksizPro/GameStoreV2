@@ -1,5 +1,6 @@
+
 import React, { useState, forwardRef, useRef, useEffect } from 'react';
-import { UserProfile } from '../hooks/useUserProfile';
+import { User } from '../types';
 
 const Logo = ({ onClick, siteName, siteSlogan }: { onClick: () => void, siteName: string, siteSlogan: string }) => (
     <div className="flex items-center gap-3 cursor-pointer" onClick={onClick}>
@@ -25,14 +26,20 @@ interface HeaderProps {
     onNavigateForum: () => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
-    profile: UserProfile;
-    onProfileClick: () => void;
+    currentUser: User | null;
+    onLoginClick: () => void;
+    onSignupClick: () => void;
+    onLogout: () => void;
 }
 
-const NavButton: React.FC<{onClick: () => void, children: React.ReactNode}> = ({ onClick, children }) => (
+const NavButton: React.FC<{onClick: () => void, children: React.ReactNode, variant?: 'primary' | 'secondary'}> = ({ onClick, children, variant = 'secondary' }) => (
     <button 
         onClick={onClick} 
-        className="font-semibold bg-[#2f2348] text-white px-4 py-2 rounded-lg transition-all duration-300 ease-in-out transform hover:bg-brand-purple hover:-translate-y-1 hover:drop-shadow-[0_4px_12px_rgba(var(--color-brand-purple),0.6)]"
+        className={`font-semibold px-4 py-2 rounded-lg transition-all duration-300 ease-in-out transform hover:-translate-y-px ${
+          variant === 'primary' 
+            ? 'bg-brand-purple text-white hover:bg-violet-500 hover:drop-shadow-[0_4px_12px_rgba(var(--color-brand-purple),0.6)]' 
+            : 'bg-[#2f2348] text-white hover:bg-brand-purple'
+        }`}
     >
         {children}
     </button>
@@ -48,7 +55,44 @@ const IconButton: React.FC<{onClick: () => void, children: React.ReactNode, 'ari
     </button>
 );
 
-const Header = forwardRef<HTMLElement, HeaderProps>(({ siteName, siteSlogan, onNavigateHome, onNavigateAdmin, onShowAllGames, onNavigateRequestGame, onNavigateForum, searchQuery, setSearchQuery, profile, onProfileClick }, ref) => {
+const UserMenu: React.FC<{ user: User; onLogout: () => void }> = ({ user, onLogout }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    return (
+        <div className="relative" ref={menuRef}>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-10 h-10 rounded-full bg-brand-light-gray/10 overflow-hidden ring-2 ring-transparent hover:ring-brand-purple transition-all"
+            >
+                <img src={user.avatarUrl} alt={user.username} className="w-full h-full object-cover" />
+            </button>
+            {isOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-[#2f2348] rounded-lg shadow-lg border border-gray-700 py-1 animate-fadeIn">
+                    <div className="px-4 py-2 border-b border-gray-700">
+                        <p className="text-sm font-semibold text-white truncate">{user.username}</p>
+                    </div>
+                    <a href="#" onClick={(e) => { e.preventDefault(); onLogout(); setIsOpen(false); }} className="block px-4 py-2 text-sm text-brand-gray hover:bg-brand-purple hover:text-white transition-colors w-full text-left">
+                        Logout
+                    </a>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
+const Header = forwardRef<HTMLElement, HeaderProps>(({ siteName, siteSlogan, onNavigateHome, onNavigateAdmin, onShowAllGames, onNavigateRequestGame, onNavigateForum, searchQuery, setSearchQuery, currentUser, onLoginClick, onSignupClick, onLogout }, ref) => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,13 +116,6 @@ const Header = forwardRef<HTMLElement, HeaderProps>(({ siteName, siteSlogan, onN
                     </div>
 
                     <div className="flex items-center gap-3">
-                         <button 
-                            onClick={onProfileClick} 
-                            aria-label="User Profile" 
-                            className="w-10 h-10 rounded-full bg-brand-light-gray/10 overflow-hidden transition-transform duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-brand-purple focus:ring-offset-2 focus:ring-offset-brand-dark-2"
-                        >
-                            <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
-                        </button>
                          <div className="flex items-center gap-2 transition-all duration-300">
                             <input
                                 ref={searchInputRef}
@@ -96,6 +133,15 @@ const Header = forwardRef<HTMLElement, HeaderProps>(({ siteName, siteSlogan, onN
                         <IconButton onClick={onNavigateAdmin} aria-label="Admin Panel">
                            <span className="material-symbols-outlined">admin_panel_settings</span>
                         </IconButton>
+                        <div className="w-px h-6 bg-gray-700 mx-1"></div>
+                        {currentUser ? (
+                            <UserMenu user={currentUser} onLogout={onLogout} />
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <NavButton onClick={onLoginClick} variant="secondary">Login</NavButton>
+                                <NavButton onClick={onSignupClick} variant="primary">Sign Up</NavButton>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
