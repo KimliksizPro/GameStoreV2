@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ForumTopic } from '../types';
 import { UserProfile } from '../hooks/useUserProfile';
 import { formatDistanceToNow } from 'date-fns';
@@ -7,10 +7,11 @@ interface TopicCardProps {
   topic: ForumTopic;
   onClick: () => void;
   onDelete: (e: React.MouseEvent) => void;
-  isAuthor: boolean;
+  onEdit: (e: React.MouseEvent) => void;
+  canModify: boolean;
 }
 
-const TopicCard: React.FC<TopicCardProps> = ({ topic, onClick, onDelete, isAuthor }) => {
+const TopicCard: React.FC<TopicCardProps> = ({ topic, onClick, onDelete, onEdit, canModify }) => {
   const timeAgo = formatDistanceToNow(new Date(topic.createdAt), { addSuffix: true });
 
   return (
@@ -25,103 +26,54 @@ const TopicCard: React.FC<TopicCardProps> = ({ topic, onClick, onDelete, isAutho
           by <span className="font-semibold text-brand-light-purple">{topic.author}</span> • {timeAgo}
         </p>
       </div>
-      <div className="text-right flex-shrink-0 flex items-center gap-2">
-        <div className="flex items-center gap-2 text-brand-gray">
+      <div className="text-right flex-shrink-0 flex items-center gap-1">
+        <div className="flex items-center gap-2 text-brand-gray mr-2">
           <span className="material-symbols-outlined text-lg">comment</span>
           <span className="font-semibold text-white">{topic.comments.length}</span>
         </div>
-        {isAuthor && (
-            <button
-                onClick={onDelete}
-                className="p-2 text-brand-gray hover:text-red-500 rounded-full hover:bg-red-500/10 transition-colors"
-                aria-label="Delete topic"
-                title="Delete topic"
-            >
-                <span className="material-symbols-outlined">delete</span>
-            </button>
+        {canModify && (
+            <>
+                <button
+                    onClick={onEdit}
+                    className="p-2 text-brand-gray hover:text-yellow-400 rounded-full hover:bg-yellow-500/10 transition-colors"
+                    aria-label="Edit topic"
+                    title="Edit topic"
+                >
+                    <span className="material-symbols-outlined">edit</span>
+                </button>
+                <button
+                    onClick={onDelete}
+                    className="p-2 text-brand-gray hover:text-red-500 rounded-full hover:bg-red-500/10 transition-colors"
+                    aria-label="Delete topic"
+                    title="Delete topic"
+                >
+                    <span className="material-symbols-outlined">delete</span>
+                </button>
+            </>
         )}
       </div>
     </div>
   );
 };
 
-const CreateTopicModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: { title: string, content: string }) => void;
-}> = ({ isOpen, onClose, onSubmit }) => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (title.trim() && content.trim()) {
-      onSubmit({ title, content });
-      setTitle('');
-      setContent('');
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={onClose}>
-      <div className="bg-[#1C162D] rounded-xl border border-gray-800 w-full max-w-2xl" onClick={e => e.stopPropagation()}>
-        <form onSubmit={handleSubmit} className="p-8">
-          <h2 className="text-2xl font-bold mb-6 text-white">Create New Topic</h2>
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Topic Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              className="w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white"
-            />
-            <textarea
-              placeholder="What's on your mind?"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-              rows={6}
-              className="w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white"
-            />
-          </div>
-          <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-800">
-            <button type="button" onClick={onClose} className="text-gray-300 font-bold py-2 px-4 rounded-lg transition-colors hover:bg-gray-700">Cancel</button>
-            <button type="submit" className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-6 rounded-lg transition-colors">Create Topic</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
 
 interface ForumPageProps {
   topics: ForumTopic[];
   onTopicClick: (id: string) => void;
-  onCreateTopic: (data: Omit<ForumTopic, 'id' | 'comments' | 'createdAt'>) => void;
+  onOpenCreateTopic: () => void;
   profile: UserProfile;
   isProfileSet: boolean;
   onRequestProfileSetup: () => void;
   onDeleteTopic: (id: string) => void;
+  onEditTopic: (topic: ForumTopic) => void;
+  isAdmin: boolean;
 }
 
-const ForumPage: React.FC<ForumPageProps> = ({ topics, onTopicClick, onCreateTopic, profile, isProfileSet, onRequestProfileSetup, onDeleteTopic }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleCreateTopic = (data: { title: string, content: string }) => {
-     onCreateTopic({
-      ...data,
-      author: profile.name,
-      avatarUrl: profile.avatarUrl,
-    });
-    setIsModalOpen(false);
-  };
+const ForumPage: React.FC<ForumPageProps> = ({ topics, onTopicClick, onOpenCreateTopic, profile, isProfileSet, onRequestProfileSetup, onDeleteTopic, onEditTopic, isAdmin }) => {
   
   const handleCreateClick = () => {
     if (isProfileSet) {
-      setIsModalOpen(true);
+      onOpenCreateTopic();
     } else {
       onRequestProfileSetup();
     }
@@ -146,27 +98,27 @@ const ForumPage: React.FC<ForumPageProps> = ({ topics, onTopicClick, onCreateTop
       </div>
 
       <div className="space-y-4">
-        {sortedTopics.map((topic, index) => (
-           <div key={topic.id} className="animate-fadeInUp" style={{ animationDelay: `${index * 50}ms`}}>
-             <TopicCard
-                topic={topic}
-                onClick={() => onTopicClick(topic.id)}
-                isAuthor={profile.name === topic.author}
-                onDelete={(e) => {
-                    e.stopPropagation();
-                    onDeleteTopic(topic.id);
-                }}
-            />
-          </div>
-        ))}
+        {sortedTopics.map((topic, index) => {
+           const canModify = profile.name === topic.author || isAdmin;
+           return (
+             <div key={topic.id} className="animate-fadeInUp" style={{ animationDelay: `${index * 50}ms`}}>
+               <TopicCard
+                  topic={topic}
+                  onClick={() => onTopicClick(topic.id)}
+                  canModify={canModify}
+                  onEdit={(e) => {
+                      e.stopPropagation();
+                      onEditTopic(topic);
+                  }}
+                  onDelete={(e) => {
+                      e.stopPropagation();
+                      onDeleteTopic(topic.id);
+                  }}
+              />
+            </div>
+           );
+        })}
       </div>
-      
-      <CreateTopicModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateTopic}
-      />
-
     </section>
   );
 };

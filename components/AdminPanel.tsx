@@ -14,6 +14,7 @@ interface AdminPanelProps {
   onLogout: () => void;
   siteSettings: SiteSettings;
   onSaveSettings: (settings: SiteSettings) => void;
+  onNavigateHome: () => void;
 }
 
 type AdminTab = 'dashboard' | 'games' | 'users' | 'analytics' | 'settings';
@@ -74,6 +75,10 @@ const AdminPanel: React.FC<AdminPanelProps> = (props) => {
                     </nav>
                 </div>
                 <div className="mt-auto flex flex-col gap-2">
+                    <button onClick={props.onNavigateHome} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:bg-brand-purple/50 hover:text-white transition-colors">
+                        <span className="material-symbols-outlined">visibility</span>
+                        <p className="text-sm font-medium leading-normal">Siteyi Görüntüle</p>
+                    </button>
                     <button onClick={props.onLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:bg-red-900/50 hover:text-white transition-colors">
                         <span className="material-symbols-outlined">logout</span>
                         <p className="text-sm font-medium leading-normal">Log Out</p>

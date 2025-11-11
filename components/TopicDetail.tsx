@@ -12,6 +12,8 @@ interface TopicDetailProps {
   isProfileSet: boolean;
   onRequestProfileSetup: () => void;
   onDeleteTopic: (topicId: string) => void;
+  onEditTopic: (topic: ForumTopic) => void;
+  isAdmin: boolean;
 }
 
 const CommentCard: React.FC<{ comment: ForumComment }> = ({ comment }) => {
@@ -31,11 +33,11 @@ const CommentCard: React.FC<{ comment: ForumComment }> = ({ comment }) => {
 };
 
 
-const TopicDetail: React.FC<TopicDetailProps> = ({ topic, onAddComment, onBack, profile, isProfileSet, onRequestProfileSetup, onDeleteTopic }) => {
+const TopicDetail: React.FC<TopicDetailProps> = ({ topic, onAddComment, onBack, profile, isProfileSet, onRequestProfileSetup, onDeleteTopic, onEditTopic, isAdmin }) => {
   const [newComment, setNewComment] = useState('');
   const { showToast } = useToast();
   const timeAgo = formatDistanceToNow(new Date(topic.createdAt), { addSuffix: true });
-  const isAuthor = profile.name === topic.author;
+  const canModify = profile.name === topic.author || isAdmin;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,15 +92,25 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topic, onAddComment, onBack, 
                     >
                         <span className="material-symbols-outlined">content_copy</span>
                     </button>
-                    {isAuthor && (
-                        <button
-                            onClick={() => onDeleteTopic(topic.id)}
-                            className="p-2 text-brand-gray hover:text-red-500 rounded-full hover:bg-red-500/10 transition-colors"
-                            title="Delete topic"
-                            aria-label="Delete topic"
-                        >
-                            <span className="material-symbols-outlined">delete</span>
-                        </button>
+                    {canModify && (
+                        <>
+                            <button
+                                onClick={() => onEditTopic(topic)}
+                                className="p-2 text-brand-gray hover:text-yellow-400 rounded-full hover:bg-yellow-500/10 transition-colors"
+                                title="Edit topic"
+                                aria-label="Edit topic"
+                            >
+                                <span className="material-symbols-outlined">edit</span>
+                            </button>
+                            <button
+                                onClick={() => onDeleteTopic(topic.id)}
+                                className="p-2 text-brand-gray hover:text-red-500 rounded-full hover:bg-red-500/10 transition-colors"
+                                title="Delete topic"
+                                aria-label="Delete topic"
+                            >
+                                <span className="material-symbols-outlined">delete</span>
+                            </button>
+                        </>
                     )}
                 </div>
               </div>

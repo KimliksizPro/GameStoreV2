@@ -12,6 +12,7 @@ import GameCardSkeleton from './components/GameCardSkeleton';
 import ForumPage from './components/ForumPage';
 import TopicDetail from './components/TopicDetail';
 import UserProfileModal from './components/UserProfileModal';
+import TopicModal from './components/TopicModal';
 import { useGames } from './hooks/useGames';
 import { useSiteSettings, SiteSettings } from './hooks/useSiteSettings';
 import { useForum } from './hooks/useForum';
@@ -44,13 +45,15 @@ const themeColorMap = {
 const AppContent: React.FC = () => {
   const { games, loading: gamesLoading, addGame, updateGame, deleteGame, getGameById } = useGames();
   const { settings, loading: settingsLoading, updateSettings } = useSiteSettings();
-  const { topics, loading: forumLoading, getTopicById, addTopic, addComment, deleteTopic } = useForum();
+  const { topics, loading: forumLoading, getTopicById, addTopic, updateTopic, addComment, deleteTopic } = useForum();
   const { profile, isProfileSet, saveProfile } = useUserProfile();
   const [view, setView] = useState<View>({ page: 'home', id: null });
   const [searchQuery, setSearchQuery] = useState('');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [showAllGames, setShowAllGames] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
+  const [topicToEdit, setTopicToEdit] = useState<ForumTopic | null>(null);
   const { showToast } = useToast();
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -156,10 +159,23 @@ const AppContent: React.FC = () => {
     showToast(`Profile saved! Welcome, ${name}.`, 'success');
   };
 
+  const handleOpenEditTopicModal = (topic: ForumTopic) => {
+    setTopicToEdit(topic);
+    setIsTopicModalOpen(true);
+  };
+
   const handleAddTopic = (topicData: Omit<ForumTopic, 'id' | 'comments' | 'createdAt'>) => {
     const newTopicId = addTopic(topicData);
     showToast('Topic created successfully!', 'success');
+    setIsTopicModalOpen(false);
     navigateToTopic(newTopicId);
+  };
+  
+  const handleUpdateTopic = (topicId: string, data: { title: string; content: string }) => {
+    updateTopic(topicId, data);
+    showToast('Topic updated successfully!', 'success');
+    setIsTopicModalOpen(false);
+    setTopicToEdit(null);
   };
 
   const handleAddComment = (topicId: string, commentData: Omit<ForumComment, 'id' | 'createdAt'>) => {
@@ -174,7 +190,7 @@ const AppContent: React.FC = () => {
         return;
     }
     // Authorization check
-    if (topic.author !== profile.name) {
+    if (topic.author !== profile.name && !isAdminAuthenticated) {
         showToast('You can only delete your own topics.', 'error');
         return;
     }
@@ -229,6 +245,7 @@ const AppContent: React.FC = () => {
         onLogout={handleLogout}
         siteSettings={settings}
         onSaveSettings={handleSaveSettings}
+        onNavigateHome={navigateToHome}
       />;
   }
 
@@ -284,11 +301,13 @@ const AppContent: React.FC = () => {
         return <ForumPage 
                   topics={topics} 
                   onTopicClick={navigateToTopic} 
-                  onCreateTopic={handleAddTopic}
+                  onOpenCreateTopic={() => { setTopicToEdit(null); setIsTopicModalOpen(true); }}
                   profile={profile}
                   isProfileSet={isProfileSet}
                   onRequestProfileSetup={() => setIsProfileModalOpen(true)}
                   onDeleteTopic={handleDeleteTopic}
+                  onEditTopic={handleOpenEditTopicModal}
+                  isAdmin={isAdminAuthenticated}
                 />;
       case 'topic':
         const topic = getTopicById(view.id || '');
@@ -300,6 +319,8 @@ const AppContent: React.FC = () => {
                             isProfileSet={isProfileSet}
                             onRequestProfileSetup={() => setIsProfileModalOpen(true)}
                             onDeleteTopic={handleDeleteTopic}
+                            onEditTopic={handleOpenEditTopicModal}
+                            isAdmin={isAdminAuthenticated}
                           />;
         // If topic not found, navigate back to forum list
         navigateToForum();
@@ -356,6 +377,25 @@ const AppContent: React.FC = () => {
         onClose={() => setIsProfileModalOpen(false)}
         onSave={handleSaveProfile}
         currentProfile={profile}
+      />
+      <TopicModal
+          isOpen={isTopicModalOpen}
+          onClose={() => {
+              setIsTopicModalOpen(false);
+              setTopicToEdit(null);
+          }}
+          onSubmit={(data) => {
+              if (topicToEdit) {
+                  handleUpdateTopic(topicToEdit.id, data);
+              } else {
+                  handleAddTopic({
+                      ...data,
+                      author: profile.name,
+                      avatarUrl: profile.avatarUrl
+                  });
+              }
+          }}
+          initialData={topicToEdit ? { title: topicToEdit.title, content: topicToEdit.content } : undefined}
       />
       <Footer siteName={settings.siteName} contactEmail={settings.contactEmail} />
       <BackToTopButton />

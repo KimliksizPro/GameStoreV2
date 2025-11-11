@@ -68,6 +68,17 @@ export const useForum = () => {
     return newTopic.id;
   };
 
+  const updateTopic = async (topicId: string, data: { title: string; content: string }) => {
+    const updatedTopics = topics.map(topic => {
+      if (topic.id === topicId) {
+        return { ...topic, title: data.title, content: data.content };
+      }
+      return topic;
+    });
+    setTopics(updatedTopics);
+    await updateRemoteTopics(updatedTopics);
+  };
+
   const addComment = (topicId: string, commentData: Omit<ForumComment, 'id' | 'createdAt'>) => {
     const newComment: ForumComment = {
       ...commentData,
@@ -100,5 +111,5 @@ export const useForum = () => {
     return topics.find(topic => topic.id === topicId);
   };
 
-  return { topics, loading, getTopicById, addTopic, addComment, deleteTopic };
+  return { topics, loading, getTopicById, addTopic, addComment, deleteTopic, updateTopic };
 };
