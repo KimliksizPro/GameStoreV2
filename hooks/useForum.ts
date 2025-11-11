@@ -2,33 +2,22 @@ import { useState, useEffect } from 'react';
 import { ForumTopic, ForumComment } from '../types';
 import { initialTopics } from '../data/forum';
 
-const FORUM_STORAGE_KEY = 'forum_data';
+// NOTE FOR DEVELOPER:
+// The forum data is currently managed in-memory and will reset on page refresh.
+// For a persistent, multi-user forum, this hook should be connected to a backend API.
+// The use of localStorage has been removed because it is client-specific and does not
+// allow for data sharing between different users, which was the source of the issue.
 
 export const useForum = () => {
   const [topics, setTopics] = useState<ForumTopic[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedTopics = localStorage.getItem(FORUM_STORAGE_KEY);
-      if (storedTopics) {
-        setTopics(JSON.parse(storedTopics));
-      } else {
-        setTopics(initialTopics);
-        localStorage.setItem(FORUM_STORAGE_KEY, JSON.stringify(initialTopics));
-      }
-    } catch (error) {
-      console.error("Failed to load forum topics from storage", error);
-      setTopics(initialTopics);
-    } finally {
-      setLoading(false);
-    }
+    // Simulate fetching initial data from a server.
+    // In a real app, this would be an API call.
+    setTopics(initialTopics);
+    setLoading(false);
   }, []);
-
-  const updateStorage = (updatedTopics: ForumTopic[]) => {
-    setTopics(updatedTopics);
-    localStorage.setItem(FORUM_STORAGE_KEY, JSON.stringify(updatedTopics));
-  };
 
   const addTopic = (topicData: Omit<ForumTopic, 'id' | 'comments' | 'createdAt'>): string => {
     const newTopic: ForumTopic = {
@@ -37,7 +26,7 @@ export const useForum = () => {
       createdAt: new Date().toISOString(),
       comments: [],
     };
-    updateStorage([newTopic, ...topics]);
+    setTopics(currentTopics => [newTopic, ...currentTopics]);
     return newTopic.id;
   };
 
@@ -48,16 +37,17 @@ export const useForum = () => {
       createdAt: new Date().toISOString(),
     };
 
-    const updatedTopics = topics.map(topic => {
-      if (topic.id === topicId) {
-        return {
-          ...topic,
-          comments: [...topic.comments, newComment],
-        };
-      }
-      return topic;
-    });
-    updateStorage(updatedTopics);
+    setTopics(currentTopics =>
+      currentTopics.map(topic => {
+        if (topic.id === topicId) {
+          return {
+            ...topic,
+            comments: [...topic.comments, newComment],
+          };
+        }
+        return topic;
+      })
+    );
   };
   
   const getTopicById = (topicId: string): ForumTopic | undefined => {
