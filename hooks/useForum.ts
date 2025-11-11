@@ -50,6 +50,7 @@ export const useForum = () => {
       }
     } catch (error) {
       console.error('Error updating remote topics:', error);
+      throw error; // Re-throw error to be caught by the caller
     }
   }, []);
 
@@ -88,10 +89,16 @@ export const useForum = () => {
     setTopics(updatedTopics); // Optimistic update
     updateRemoteTopics(updatedTopics); // Push to remote
   };
+
+  const deleteTopic = useCallback(async (topicId: string) => {
+    const updatedTopics = topics.filter(topic => topic.id !== topicId);
+    setTopics(updatedTopics); // Optimistic update
+    await updateRemoteTopics(updatedTopics);
+  }, [topics, updateRemoteTopics]);
   
   const getTopicById = (topicId: string): ForumTopic | undefined => {
     return topics.find(topic => topic.id === topicId);
   };
 
-  return { topics, loading, getTopicById, addTopic, addComment };
+  return { topics, loading, getTopicById, addTopic, addComment, deleteTopic };
 };

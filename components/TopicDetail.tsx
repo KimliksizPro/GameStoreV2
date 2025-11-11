@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ForumTopic, ForumComment } from '../types';
 import { UserProfile } from '../hooks/useUserProfile';
@@ -12,6 +11,7 @@ interface TopicDetailProps {
   profile: UserProfile;
   isProfileSet: boolean;
   onRequestProfileSetup: () => void;
+  onDeleteTopic: (topicId: string) => void;
 }
 
 const CommentCard: React.FC<{ comment: ForumComment }> = ({ comment }) => {
@@ -31,10 +31,11 @@ const CommentCard: React.FC<{ comment: ForumComment }> = ({ comment }) => {
 };
 
 
-const TopicDetail: React.FC<TopicDetailProps> = ({ topic, onAddComment, onBack, profile, isProfileSet, onRequestProfileSetup }) => {
+const TopicDetail: React.FC<TopicDetailProps> = ({ topic, onAddComment, onBack, profile, isProfileSet, onRequestProfileSetup, onDeleteTopic }) => {
   const [newComment, setNewComment] = useState('');
   const { showToast } = useToast();
   const timeAgo = formatDistanceToNow(new Date(topic.createdAt), { addSuffix: true });
+  const isAuthor = profile.name === topic.author;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,14 +81,26 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topic, onAddComment, onBack, 
             <div className="bg-brand-dark border border-gray-800 rounded-lg p-6 mb-8">
               <div className="flex justify-between items-start gap-4">
                 <h1 className="text-3xl md:text-4xl font-extrabold mb-4 flex-1">{topic.title}</h1>
-                <button
-                    onClick={handleCopy}
-                    className="p-2 text-brand-gray hover:text-white rounded-full hover:bg-brand-light-gray/20 transition-colors"
-                    title="Konu içeriğini kopyala"
-                    aria-label="Konu içeriğini kopyala"
-                >
-                    <span className="material-symbols-outlined">content_copy</span>
-                </button>
+                <div className="flex items-center">
+                    <button
+                        onClick={handleCopy}
+                        className="p-2 text-brand-gray hover:text-white rounded-full hover:bg-brand-light-gray/20 transition-colors"
+                        title="Konu içeriğini kopyala"
+                        aria-label="Konu içeriğini kopyala"
+                    >
+                        <span className="material-symbols-outlined">content_copy</span>
+                    </button>
+                    {isAuthor && (
+                        <button
+                            onClick={() => onDeleteTopic(topic.id)}
+                            className="p-2 text-brand-gray hover:text-red-500 rounded-full hover:bg-red-500/10 transition-colors"
+                            title="Delete topic"
+                            aria-label="Delete topic"
+                        >
+                            <span className="material-symbols-outlined">delete</span>
+                        </button>
+                    )}
+                </div>
               </div>
               <div className="flex items-center gap-3 border-b border-gray-800 pb-4 mb-4">
                   <img src={topic.avatarUrl} alt={topic.author} className="w-10 h-10 rounded-full object-cover" />

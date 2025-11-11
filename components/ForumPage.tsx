@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ForumTopic } from '../types';
 import { UserProfile } from '../hooks/useUserProfile';
@@ -7,9 +6,11 @@ import { formatDistanceToNow } from 'date-fns';
 interface TopicCardProps {
   topic: ForumTopic;
   onClick: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+  isAuthor: boolean;
 }
 
-const TopicCard: React.FC<TopicCardProps> = ({ topic, onClick }) => {
+const TopicCard: React.FC<TopicCardProps> = ({ topic, onClick, onDelete, isAuthor }) => {
   const timeAgo = formatDistanceToNow(new Date(topic.createdAt), { addSuffix: true });
 
   return (
@@ -24,12 +25,21 @@ const TopicCard: React.FC<TopicCardProps> = ({ topic, onClick }) => {
           by <span className="font-semibold text-brand-light-purple">{topic.author}</span> • {timeAgo}
         </p>
       </div>
-      <div className="text-right flex-shrink-0">
+      <div className="text-right flex-shrink-0 flex items-center gap-2">
         <div className="flex items-center gap-2 text-brand-gray">
           <span className="material-symbols-outlined text-lg">comment</span>
           <span className="font-semibold text-white">{topic.comments.length}</span>
         </div>
-        <p className="text-xs text-brand-gray mt-1">Replies</p>
+        {isAuthor && (
+            <button
+                onClick={onDelete}
+                className="p-2 text-brand-gray hover:text-red-500 rounded-full hover:bg-red-500/10 transition-colors"
+                aria-label="Delete topic"
+                title="Delete topic"
+            >
+                <span className="material-symbols-outlined">delete</span>
+            </button>
+        )}
       </div>
     </div>
   );
@@ -94,9 +104,10 @@ interface ForumPageProps {
   profile: UserProfile;
   isProfileSet: boolean;
   onRequestProfileSetup: () => void;
+  onDeleteTopic: (id: string) => void;
 }
 
-const ForumPage: React.FC<ForumPageProps> = ({ topics, onTopicClick, onCreateTopic, profile, isProfileSet, onRequestProfileSetup }) => {
+const ForumPage: React.FC<ForumPageProps> = ({ topics, onTopicClick, onCreateTopic, profile, isProfileSet, onRequestProfileSetup, onDeleteTopic }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleCreateTopic = (data: { title: string, content: string }) => {
@@ -137,7 +148,15 @@ const ForumPage: React.FC<ForumPageProps> = ({ topics, onTopicClick, onCreateTop
       <div className="space-y-4">
         {sortedTopics.map((topic, index) => (
            <div key={topic.id} className="animate-fadeInUp" style={{ animationDelay: `${index * 50}ms`}}>
-             <TopicCard topic={topic} onClick={() => onTopicClick(topic.id)} />
+             <TopicCard
+                topic={topic}
+                onClick={() => onTopicClick(topic.id)}
+                isAuthor={profile.name === topic.author}
+                onDelete={(e) => {
+                    e.stopPropagation();
+                    onDeleteTopic(topic.id);
+                }}
+            />
           </div>
         ))}
       </div>

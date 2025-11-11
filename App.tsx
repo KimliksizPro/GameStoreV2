@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -47,7 +44,7 @@ const themeColorMap = {
 const AppContent: React.FC = () => {
   const { games, loading: gamesLoading, addGame, updateGame, deleteGame, getGameById } = useGames();
   const { settings, loading: settingsLoading, updateSettings } = useSiteSettings();
-  const { topics, loading: forumLoading, getTopicById, addTopic, addComment } = useForum();
+  const { topics, loading: forumLoading, getTopicById, addTopic, addComment, deleteTopic } = useForum();
   const { profile, isProfileSet, saveProfile } = useUserProfile();
   const [view, setView] = useState<View>({ page: 'home', id: null });
   const [searchQuery, setSearchQuery] = useState('');
@@ -170,6 +167,31 @@ const AppContent: React.FC = () => {
     showToast('Reply posted!', 'success');
   };
   
+  const handleDeleteTopic = (topicId: string) => {
+    const topic = getTopicById(topicId);
+    if (!topic) {
+        showToast('Error: Topic not found.', 'error');
+        return;
+    }
+    // Authorization check
+    if (topic.author !== profile.name) {
+        showToast('You can only delete your own topics.', 'error');
+        return;
+    }
+
+    if (window.confirm(`Are you sure you want to delete this topic: "${topic.title}"?`)) {
+        deleteTopic(topicId).then(() => {
+            showToast('Topic deleted successfully!', 'success');
+            if (view.page === 'topic' && view.id === topicId) {
+                navigateToForum();
+            }
+        }).catch((error) => {
+            console.error("Failed to delete topic:", error);
+            showToast('An error occurred while deleting the topic.', 'error');
+        });
+    }
+  };
+
   const featuredGames = useMemo(() => games.filter(g => g.featured), [games]);
   
   const newReleasesGames = useMemo(() => 
@@ -266,6 +288,7 @@ const AppContent: React.FC = () => {
                   profile={profile}
                   isProfileSet={isProfileSet}
                   onRequestProfileSetup={() => setIsProfileModalOpen(true)}
+                  onDeleteTopic={handleDeleteTopic}
                 />;
       case 'topic':
         const topic = getTopicById(view.id || '');
@@ -276,6 +299,7 @@ const AppContent: React.FC = () => {
                             profile={profile}
                             isProfileSet={isProfileSet}
                             onRequestProfileSetup={() => setIsProfileModalOpen(true)}
+                            onDeleteTopic={handleDeleteTopic}
                           />;
         // If topic not found, navigate back to forum list
         navigateToForum();
