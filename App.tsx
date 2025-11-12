@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -98,6 +99,99 @@ const AppContent: React.FC = () => {
        body.classList.add('font-display');
     }
   }, [settings.themeColor, view.page]);
+
+  useEffect(() => {
+    // SEO and Metadata Management
+    const updateMetaTags = () => {
+      const siteName = settings.siteName[language];
+      const baseUrl = window.location.origin + window.location.pathname;
+      const defaultDescription = t('footer.copyright', { siteName });
+      const defaultTitle = `${siteName} - ${settings.siteSlogan[language]}`;
+      const defaultImage = 'https://images.weserv.nl/?url=https://wallpapercave.com/wp/NjGW245.jpg';
+
+      let title = defaultTitle;
+      let description = defaultDescription;
+      let imageUrl = defaultImage;
+      let canonicalUrl = baseUrl;
+      let structuredData: object | null = {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": siteName,
+        "url": canonicalUrl,
+      };
+
+      if (view.page === 'game' && view.id) {
+        const game = getGameById(view.id);
+        if (game) {
+          title = `${game.title[language]} | ${siteName}`;
+          description = game.description[language].substring(0, 160);
+          imageUrl = game.horizontalImageUrl;
+          canonicalUrl = `${baseUrl}?page=game&id=${game.id}`;
+          structuredData = {
+            "@context": "https://schema.org",
+            "@type": "VideoGame",
+            "name": game.title[language],
+            "description": game.description[language],
+            "image": game.horizontalImageUrl,
+            "url": canonicalUrl,
+            "genre": game.genre[language],
+            "operatingSystem": game.platform,
+            "datePublished": game.releaseDate,
+            "offers": {
+              "@type": "Offer",
+              "price": game.price,
+              "priceCurrency": "USD"
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": siteName
+            }
+          };
+        }
+      } else if (view.page === 'forum') {
+        title = `${t('forum.title')} | ${siteName}`;
+        description = t('forum.description');
+        canonicalUrl = `${baseUrl}?page=forum`;
+      } else if (view.page === 'topic' && view.id) {
+        const topic = getTopicById(view.id);
+        if (topic) {
+          title = `${topic.title[language]} | ${t('forum.title')} | ${siteName}`;
+          description = topic.content[language].substring(0, 160);
+          canonicalUrl = `${baseUrl}?page=topic&id=${topic.id}`;
+        }
+      } else if (view.page === 'request') {
+          title = `${t('requestGame.title')} | ${siteName}`;
+          description = t('requestGame.description');
+          canonicalUrl = `${baseUrl}?page=request`;
+      }
+      
+      // Update DOM
+      document.title = title;
+      document.querySelector('#meta-description')?.setAttribute('content', description);
+      document.querySelector('#canonical-link')?.setAttribute('href', canonicalUrl);
+      
+      // Open Graph
+      document.querySelector('#og-title')?.setAttribute('content', title);
+      document.querySelector('#og-description')?.setAttribute('content', description);
+      document.querySelector('#og-url')?.setAttribute('content', canonicalUrl);
+      document.querySelector('#og-image')?.setAttribute('content', imageUrl);
+      
+      // Twitter Card
+      document.querySelector('#twitter-title')?.setAttribute('content', title);
+      document.querySelector('#twitter-description')?.setAttribute('content', description);
+      document.querySelector('#twitter-url')?.setAttribute('content', canonicalUrl);
+      document.querySelector('#twitter-image')?.setAttribute('content', imageUrl);
+
+      // Structured Data
+      const ldJsonScript = document.getElementById('ld-json-data');
+      if (ldJsonScript) {
+        ldJsonScript.innerHTML = structuredData ? JSON.stringify(structuredData) : '';
+      }
+    };
+
+    updateMetaTags();
+  }, [view, settings, language, getGameById, getTopicById, t]);
+
 
   const navigateToHome = () => setView({ page: 'home' });
   const navigateToGame = (id: string) => setView({ page: 'game', id });
