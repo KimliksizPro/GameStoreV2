@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { ForumTopic, ForumComment } from '../types';
+import { ForumTopic, ForumComment, LocalizedString } from '../types';
 import { initialTopics } from '../data/forum';
 
 const API_ENDPOINT = 'https://api.npoint.io/ca11c27cf089a13efc29';
@@ -71,7 +71,7 @@ export const useForum = () => {
     return newTopic.id;
   };
 
-  const updateTopic = async (topicId: string, data: { title: string; content: string }) => {
+  const updateTopic = async (topicId: string, data: { title: LocalizedString; content: LocalizedString }) => {
     const updatedTopics = topics.map(topic => {
       if (topic.id === topicId) {
         return { ...topic, title: data.title, content: data.content };

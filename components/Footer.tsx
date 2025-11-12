@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 
 const Logo = ({ siteName }: { siteName: string }) => (
     <div className="flex items-center gap-3">
@@ -18,6 +19,7 @@ const SocialIcon: React.FC<{href: string, children: React.ReactNode}> = ({ href,
 );
 
 const Footer: React.FC<{ siteName: string, contactEmail: string }> = ({ siteName, contactEmail }) => {
+    const { t } = useTranslation();
     return (
         <footer className="bg-brand-dark mt-20">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -26,10 +28,10 @@ const Footer: React.FC<{ siteName: string, contactEmail: string }> = ({ siteName
                         <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
                             <Logo siteName={siteName} />
                             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-brand-gray">
-                                <a href="#" className="hover:text-white transition-colors duration-300">About</a>
-                                <a href="#" className="hover:text-white transition-colors duration-300">Privacy Policy</a>
-                                <a href="#" className="hover:text-white transition-colors duration-300">Terms of Service</a>
-                                {contactEmail && <a href={`mailto:${contactEmail}`} className="hover:text-white transition-colors duration-300">Contact Us</a>}
+                                <a href="#" className="hover:text-white transition-colors duration-300">{t('footer.about')}</a>
+                                <a href="#" className="hover:text-white transition-colors duration-300">{t('footer.privacy')}</a>
+                                <a href="#" className="hover:text-white transition-colors duration-300">{t('footer.terms')}</a>
+                                {contactEmail && <a href={`mailto:${contactEmail}`} className="hover:text-white transition-colors duration-300">{t('footer.contact')}</a>}
                             </div>
                         </div>
                         <div className="flex items-center gap-6">
@@ -38,7 +40,7 @@ const Footer: React.FC<{ siteName: string, contactEmail: string }> = ({ siteName
                             <SocialIcon href="#"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path></svg></SocialIcon>
                         </div>
                     </div>
-                     <p className="text-brand-gray text-sm text-center mt-8 pt-8 border-t border-gray-800">© 2024 {siteName}. All rights reserved.</p>
+                     <p className="text-brand-gray text-sm text-center mt-8 pt-8 border-t border-gray-800">{t('footer.copyright', { siteName })}</p>
                 </div>
             </div>
         </footer>

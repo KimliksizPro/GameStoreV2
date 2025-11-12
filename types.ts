@@ -1,7 +1,13 @@
 
+export type LocalizedString = {
+  en: string;
+  tr: string;
+}
+
 export interface User {
   id: string;
   username: string;
+  email: string;
   password: string;
   avatarUrl: string;
   role: 'admin' | 'user';
@@ -9,16 +15,16 @@ export interface User {
 
 export interface Game {
   id: string;
-  title: string;
-  genre: string;
+  title: LocalizedString;
+  genre: LocalizedString;
   verticalImageUrl: string;
   horizontalImageUrl: string;
   downloadUrl: string;
   releaseDate: string;
-  description: string;
+  description: LocalizedString;
   price: number;
   featured?: boolean;
-  category: string;
+  category: LocalizedString;
   patchUrl?: string;
   screenshots?: string[];
   platform?: string;
@@ -29,17 +35,27 @@ export interface ForumComment {
   authorId: string;
   authorName: string;
   avatarUrl: string;
-  content: string;
+  content: LocalizedString;
   createdAt: string;
 }
 
 export interface ForumTopic {
   id: string;
-  title: string;
+  title: LocalizedString;
   authorId: string;
   authorName: string;
   avatarUrl: string;
-  content: string;
+  content: LocalizedString;
   createdAt: string;
   comments: ForumComment[];
+}
+
+export interface RequestedGame {
+  id: string;
+  gameTitle: string;
+  reason: string;
+  userId: string;
+  requestedBy: string; // username
+  avatarUrl: string;
+  createdAt: string; // ISO string
 }

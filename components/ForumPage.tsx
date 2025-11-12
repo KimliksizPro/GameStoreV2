@@ -2,6 +2,8 @@
 import React from 'react';
 import { ForumTopic, User } from '../types';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from '../hooks/useTranslation';
+import { enUS, tr } from 'date-fns/locale';
 
 interface TopicCardProps {
   topic: ForumTopic;
@@ -12,7 +14,9 @@ interface TopicCardProps {
 }
 
 const TopicCard: React.FC<TopicCardProps> = ({ topic, onClick, onDelete, onEdit, canModify }) => {
-  const timeAgo = formatDistanceToNow(new Date(topic.createdAt), { addSuffix: true });
+  const { language, t } = useTranslation();
+  const locale = language === 'tr' ? tr : enUS;
+  const timeAgo = formatDistanceToNow(new Date(topic.createdAt), { addSuffix: true, locale });
 
   return (
     <div 
@@ -21,9 +25,9 @@ const TopicCard: React.FC<TopicCardProps> = ({ topic, onClick, onDelete, onEdit,
     >
       <img src={topic.avatarUrl} alt={topic.authorName} className="w-12 h-12 rounded-full flex-shrink-0 mt-1 object-cover" />
       <div className="flex-grow">
-        <h3 className="font-bold text-lg text-white mb-1 group-hover:text-brand-light-purple">{topic.title}</h3>
+        <h3 className="font-bold text-lg text-white mb-1 group-hover:text-brand-light-purple">{topic.title[language]}</h3>
         <p className="text-sm text-brand-gray">
-          by <span className="font-semibold text-brand-light-purple">{topic.authorName}</span> • {timeAgo}
+          {language === 'en' && t('forum.by') + ' '}<span className="font-semibold text-brand-light-purple">{topic.authorName}</span> • {timeAgo}
         </p>
       </div>
       <div className="text-right flex-shrink-0 flex items-center gap-1">
@@ -68,7 +72,8 @@ interface ForumPageProps {
 }
 
 const ForumPage: React.FC<ForumPageProps> = ({ topics, onTopicClick, onOpenCreateTopic, currentUser, onRequestLogin, onDeleteTopic, onEditTopic }) => {
-  
+  const { t } = useTranslation();
+
   const handleCreateClick = () => {
     if (currentUser) {
       onOpenCreateTopic();
@@ -83,15 +88,15 @@ const ForumPage: React.FC<ForumPageProps> = ({ topics, onTopicClick, onOpenCreat
     <section className="py-12 animate-fadeInUp">
       <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-bold">Community Forum</h1>
-          <p className="text-brand-gray mt-1">Discuss games, ask questions, and connect with other players.</p>
+          <h1 className="text-4xl font-bold">{t('forum.title')}</h1>
+          <p className="text-brand-gray mt-1">{t('forum.description')}</p>
         </div>
         <button
           onClick={handleCreateClick}
           className="bg-brand-purple hover:bg-violet-500 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-brand-purple/50 flex items-center gap-2"
         >
           <span className="material-symbols-outlined">add_comment</span>
-          <span>Create New Topic</span>
+          <span>{t('forum.createTopic')}</span>
         </button>
       </div>
 

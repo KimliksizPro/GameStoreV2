@@ -1,4 +1,6 @@
 
+
+
 import { useState, useEffect, useCallback } from 'react';
 import { User } from '../types';
 
@@ -64,9 +66,13 @@ export const useAuth = () => {
         return null;
     };
     
-    const signup = async (username: string, password: string, avatarUrl: string): Promise<{ success: boolean; message: string; }> => {
+    const signup = async (username: string, email: string, password: string, avatarUrl: string): Promise<{ success: boolean; message: string; }> => {
+        const lowercasedEmail = email.toLowerCase();
         if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
             return { success: false, message: 'Username already exists.' };
+        }
+        if (users.some(u => u.email && u.email.toLowerCase() === lowercasedEmail)) {
+            return { success: false, message: 'Email already in use.' };
         }
 
         const isAdminSignUp = username.toLowerCase() === 'admin' && password === 'semih1828';
@@ -76,6 +82,7 @@ export const useAuth = () => {
         const newUser: User = {
             id: `user_${Date.now()}`,
             username,
+            email: lowercasedEmail,
             password, // Note: Storing plaintext passwords is not secure. This is for demo purposes only.
             avatarUrl,
             role,
@@ -126,6 +133,36 @@ export const useAuth = () => {
         return success;
     };
 
+    const addUserByAdmin = async (userData: Omit<User, 'id'>): Promise<{ success: boolean; message: string; }> => {
+        const { username, email, password, avatarUrl, role } = userData;
+        const lowercasedEmail = email.toLowerCase();
+        if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+            return { success: false, message: 'Username already exists.' };
+        }
+        if (users.some(u => u.email && u.email.toLowerCase() === lowercasedEmail)) {
+            return { success: false, message: 'Email already in use.' };
+        }
 
-    return { currentUser, users, login, signup, logout, loadingAuth: loading, updateUser, deleteUser };
+        const newUser: User = {
+            id: `user_${Date.now()}`,
+            username,
+            email: lowercasedEmail,
+            password, // Note: Storing plaintext passwords is not secure. This is for demo purposes only.
+            avatarUrl,
+            role,
+        };
+
+        const updatedUsers = [...users, newUser];
+        const success = await updateRemoteUsers(updatedUsers);
+
+        if (success) {
+            setUsers(updatedUsers);
+            return { success: true, message: `User "${username}" created successfully.` };
+        } else {
+            return { success: false, message: 'An error occurred on the server. Please try again.' };
+        }
+    };
+
+
+    return { currentUser, users, login, signup, logout, loadingAuth: loading, updateUser, deleteUser, addUserByAdmin };
 };

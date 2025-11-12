@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { availableAvatars } from '../data/avatars';
@@ -6,13 +7,13 @@ import { availableAvatars } from '../data/avatars';
 interface UserEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (user: User) => void;
-  user: User;
+  onSave: (user: User | Omit<User, 'id'>) => void;
+  user: User | Omit<User, 'id'>;
   currentUser: User | null;
 }
 
 const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, user, currentUser }) => {
-    const [formData, setFormData] = useState<User>(user);
+    const [formData, setFormData] = useState<User | Omit<User, 'id'>>(user);
 
     useEffect(() => {
         setFormData(user);
@@ -30,25 +31,35 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
         onSave(formData);
     };
 
-    const isEditingSelf = user.id === currentUser?.id;
+    const isEditing = 'id' in formData && !!(formData as User).id;
+    const isEditingSelf = isEditing && (formData as User).id === currentUser?.id;
+
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={onClose}>
             <div className="bg-[#1C162D] rounded-xl border border-gray-800 w-full max-w-lg" onClick={e => e.stopPropagation()}>
                 <form onSubmit={handleSubmit} className="p-8">
-                    <h2 className="text-2xl font-bold mb-6 text-white">Edit User: <span className="text-primary">{user.username}</span></h2>
+                    <h2 className="text-2xl font-bold mb-6 text-white">
+                      {isEditing ? `Edit User: ${(user as User).username}` : 'Add New User'}
+                    </h2>
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-brand-light-purple mb-2">User ID</label>
-                            <input type="text" value={formData.id} readOnly className="form-input w-full bg-[#161022] rounded-lg p-3 border border-gray-700 text-gray-400 cursor-not-allowed" />
-                        </div>
+                        {isEditing && (
+                            <div>
+                                <label className="block text-sm font-medium text-brand-light-purple mb-2">User ID</label>
+                                <input type="text" value={(formData as User).id} readOnly className="form-input w-full bg-[#161022] rounded-lg p-3 border border-gray-700 text-gray-400 cursor-not-allowed" />
+                            </div>
+                        )}
                         <div>
                             <label htmlFor="username" className="block text-sm font-medium text-brand-light-purple mb-2">Username</label>
                             <input id="username" name="username" type="text" value={formData.username} onChange={handleChange} required className="form-input w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white" />
                         </div>
                         <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-brand-light-purple mb-2">Email</label>
+                            <input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required className="form-input w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white" />
+                        </div>
+                        <div>
                             <label htmlFor="password" className="block text-sm font-medium text-brand-light-purple mb-2">Password</label>
-                            <input id="password" name="password" type="text" value={formData.password} onChange={handleChange} required className="form-input w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white" />
+                            <input id="password" name="password" type="text" placeholder={isEditing ? 'Unchanged' : 'Enter password'} value={formData.password} onChange={handleChange} required={!isEditing} className="form-input w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white" />
                         </div>
                         <div>
                             <label htmlFor="role" className="block text-sm font-medium text-brand-light-purple mb-2">Role</label>
@@ -83,7 +94,9 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
                     </div>
                     <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-800">
                         <button type="button" onClick={onClose} className="text-gray-300 font-bold py-2 px-4 rounded-lg transition-colors hover:bg-gray-700">Cancel</button>
-                        <button type="submit" className="bg-primary hover:bg-violet-600 text-white font-bold py-2 px-6 rounded-lg transition-colors">Save Changes</button>
+                        <button type="submit" className="bg-primary hover:bg-violet-600 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                            {isEditing ? 'Save Changes' : 'Add User'}
+                        </button>
                     </div>
                 </form>
             </div>

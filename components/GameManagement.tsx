@@ -9,16 +9,17 @@ interface GameManagementProps {
   onDeleteGame: (id: string) => void;
 }
 
+// FIX: Initialize LocalizedString fields correctly to match the Game type.
 const emptyGame: Omit<Game, 'id'> = {
-  title: '',
-  genre: '',
-  category: '',
+  title: { en: '', tr: '' },
+  genre: { en: '', tr: '' },
+  category: { en: '', tr: '' },
   platform: '',
   verticalImageUrl: '',
   horizontalImageUrl: '',
   downloadUrl: '',
   releaseDate: new Date().toISOString().split('T')[0],
-  description: '',
+  description: { en: '', tr: '' },
   price: 0,
   featured: false,
   patchUrl: '',
@@ -69,11 +70,17 @@ const GameFormModal: React.FC<{
 
     const isEditing = 'id' in formData;
 
+    // FIX: Handle updates for both plain and LocalizedString fields.
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
-        if (type === 'checkbox') {
+        
+        const localizedFields = ['title', 'genre', 'category', 'description'];
+
+        if (type === 'checkbox' && 'checked' in e.target) {
             const { checked } = e.target as HTMLInputElement;
             setFormData(prev => ({ ...prev, [name]: checked }));
+        } else if (localizedFields.includes(name)) {
+             setFormData(prev => ({ ...prev, [name]: { en: value, tr: value } }));
         } else {
             setFormData(prev => ({ ...prev, [name]: type === 'number' ? parseFloat(value) : value }));
         }
@@ -94,14 +101,18 @@ const GameFormModal: React.FC<{
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={onClose}>
             <div className="bg-[#1C162D] rounded-xl border border-gray-800 w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <form onSubmit={handleSubmit} className="p-8">
-                    <h2 className="text-2xl font-bold mb-6 text-white">{isEditing ? `Editing: ${formData.title}` : 'Add New Game'}</h2>
+                    {/* FIX: Display LocalizedString correctly. */}
+                    <h2 className="text-2xl font-bold mb-6 text-white">{isEditing ? `Editing: ${formData.title.en}` : 'Add New Game'}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                        <div className="md:col-span-2">
-                         <FormInput label="Title" type="text" name="title" id="title" value={formData.title} onChange={handleChange} required />
+                         {/* FIX: Use .en property for LocalizedString value. */}
+                         <FormInput label="Title" type="text" name="title" id="title" value={formData.title.en} onChange={handleChange} required />
                         </div>
-                        <FormInput label="Genre (e.g., Action/RPG)" type="text" name="genre" id="genre" value={formData.genre} onChange={handleChange} required />
+                        {/* FIX: Use .en property for LocalizedString value. */}
+                        <FormInput label="Genre (e.g., Action/RPG)" type="text" name="genre" id="genre" value={formData.genre.en} onChange={handleChange} required />
                         <FormInput label="Platform (e.g., PC, PS5)" type="text" name="platform" id="platform" value={formData.platform || ''} onChange={handleChange} required />
-                        <FormInput label="Category" type="text" name="category" id="category" value={formData.category} onChange={handleChange} required />
+                        {/* FIX: Use .en property for LocalizedString value. */}
+                        <FormInput label="Category" type="text" name="category" id="category" value={formData.category.en} onChange={handleChange} required />
                         <FormInput label="Price" type="number" name="price" id="price" value={formData.price} onChange={handleChange} required step="0.01" min="0" />
                         <FormInput label="Release Date" type="date" name="releaseDate" id="releaseDate" value={formData.releaseDate} onChange={handleChange} required />
                         <FormInput label="Patch URL (Optional)" type="url" name="patchUrl" id="patchUrl" value={formData.patchUrl || ''} onChange={handleChange} />
@@ -115,7 +126,8 @@ const GameFormModal: React.FC<{
                           <FormInput label="Download URL" type="url" name="downloadUrl" id="downloadUrl" value={formData.downloadUrl} onChange={handleChange} required />
                         </div>
                         <div className="md:col-span-2">
-                          <FormTextarea label="Description" name="description" id="description" value={formData.description} onChange={handleChange} required rows={4} />
+                          {/* FIX: Use .en property for LocalizedString value. */}
+                          <FormTextarea label="Description" name="description" id="description" value={formData.description.en} onChange={handleChange} required rows={4} />
                         </div>
                          <div className="md:col-span-2">
                             <FormTextarea label="Screenshots (comma-separated URLs)" name="screenshots" id="screenshots" value={(formData.screenshots || []).join(', ')} onChange={handleScreenshotChange} rows={3} />
@@ -144,7 +156,8 @@ const GameManagement: React.FC<GameManagementProps> = ({ games, onAddGame, onUpd
 
     const filteredGames = useMemo(() => {
         return games.filter(game =>
-            game.title.toLowerCase().includes(searchQuery.toLowerCase())
+            // FIX: Search by a specific language property of the LocalizedString.
+            game.title.en.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [games, searchQuery]);
 
@@ -188,7 +201,7 @@ const GameManagement: React.FC<GameManagementProps> = ({ games, onAddGame, onUpd
   return (
     <>
         <header className="flex flex-wrap justify-between items-center gap-4 mb-6">
-            <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Manage Games</h1>
+            <h1 className="text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">Manage Games</h1>
             <button onClick={handleAddClick} className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-violet-600 transition-colors">
                 <span className="material-symbols-outlined mr-2 text-base">add</span>
                 <span className="truncate">Add New Game</span>
@@ -216,7 +229,8 @@ const GameManagement: React.FC<GameManagementProps> = ({ games, onAddGame, onUpd
             </div>
         </div>
 
-        <div className="overflow-x-auto bg-[#1C162D] rounded-xl border border-gray-800">
+        {/* Desktop Table */}
+        <div className="overflow-x-auto bg-[#1C162D] rounded-xl border border-gray-800 hidden md:block">
             <table className="w-full text-sm text-left text-gray-400">
                 <thead className="text-xs text-gray-400 uppercase bg-[#2f2348]">
                     <tr>
@@ -231,23 +245,57 @@ const GameManagement: React.FC<GameManagementProps> = ({ games, onAddGame, onUpd
                     {paginatedGames.map(game => (
                         <tr key={game.id} className="border-b border-gray-800 hover:bg-primary/10">
                             <th scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap flex items-center gap-4">
-                                <img src={game.verticalImageUrl} alt={game.title} className="w-12 h-16 object-cover rounded-lg"/>
-                                <span>{game.title}</span>
+                                {/* FIX: Use a property of LocalizedString for alt text and display. */}
+                                <img src={game.verticalImageUrl} alt={game.title.en} className="w-12 h-16 object-cover rounded-lg"/>
+                                <span>{game.title.en}</span>
                             </th>
-                            <td className="px-6 py-4">{game.genre}</td>
+                            {/* FIX: Use a property of LocalizedString for display. */}
+                            <td className="px-6 py-4">{game.genre.en}</td>
                             <td className="px-6 py-4">{game.platform || 'N/A'}</td>
                             <td className="px-6 py-4">{new Date(game.releaseDate).toLocaleDateString()}</td>
                             <td className="px-6 py-4 text-right">
                                 <button onClick={() => handleEditClick(game)} className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-primary/30"><span className="material-symbols-outlined text-base">edit</span></button>
-                                <button onClick={() => handleDelete(game.id, game.title)} className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-red-500/10"><span className="material-symbols-outlined text-base">delete</span></button>
+                                {/* FIX: Pass a string from LocalizedString to the handler. */}
+                                <button onClick={() => handleDelete(game.id, game.title.en)} className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-red-500/10"><span className="material-symbols-outlined text-base">delete</span></button>
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
         </div>
+
+        {/* Mobile Card List */}
+        <div className="space-y-4 md:hidden">
+            {paginatedGames.length > 0 ? paginatedGames.map(game => (
+                <div key={game.id} className="bg-[#1C162D] rounded-xl border border-gray-800 p-4 space-y-3">
+                    <div className="flex items-start gap-4">
+                        <img src={game.verticalImageUrl} alt={game.title.en} className="w-16 h-20 object-cover rounded-lg flex-shrink-0"/>
+                        <div className="flex-1">
+                            {/* FIX: Use a property of LocalizedString for display. */}
+                            <h3 className="font-bold text-white mb-1">{game.title.en}</h3>
+                            {/* FIX: Use a property of LocalizedString for display. */}
+                            <p className="text-xs text-gray-400"><strong className="font-medium text-gray-300">Genre:</strong> {game.genre.en}</p>
+                            <p className="text-xs text-gray-400"><strong className="font-medium text-gray-300">Platform:</strong> {game.platform || 'N/A'}</p>
+                            <p className="text-xs text-gray-400"><strong className="font-medium text-gray-300">Released:</strong> {new Date(game.releaseDate).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-end items-center gap-2 pt-3 border-t border-gray-700/50">
+                        <button onClick={() => handleEditClick(game)} className="text-gray-300 hover:text-white text-sm flex items-center gap-1 py-1 px-2 rounded-md hover:bg-primary/30">
+                            <span className="material-symbols-outlined text-base">edit</span> Edit
+                        </button>
+                        {/* FIX: Pass a string from LocalizedString to the handler. */}
+                        <button onClick={() => handleDelete(game.id, game.title.en)} className="text-gray-300 hover:text-red-400 text-sm flex items-center gap-1 py-1 px-2 rounded-md hover:bg-red-500/10">
+                            <span className="material-symbols-outlined text-base">delete</span> Delete
+                        </button>
+                    </div>
+                </div>
+            )) : (
+                <p className="text-center text-gray-500 py-8">No games found for "{searchQuery}".</p>
+            )}
+        </div>
+
          {totalPages > 1 && (
-            <div className="flex justify-between items-center mt-6 px-2">
+            <div className="flex flex-col md:flex-row justify-between items-center mt-6 px-2 gap-4">
                 <span className="text-sm text-gray-400">
                     Showing <span className="font-semibold text-white">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to <span className="font-semibold text-white">{Math.min(currentPage * ITEMS_PER_PAGE, filteredGames.length)}</span> of <span className="font-semibold text-white">{filteredGames.length}</span> Entries
                 </span>
@@ -260,12 +308,15 @@ const GameManagement: React.FC<GameManagementProps> = ({ games, onAddGame, onUpd
                 </div>
             </div>
         )}
-        <GameFormModal 
-            isOpen={isModalOpen}
-            onClose={closeModal}
-            onSave={handleSaveGame}
-            game={editingGame}
-        />
+        
+        {editingGame && (
+            <GameFormModal 
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                onSave={handleSaveGame}
+                game={editingGame}
+            />
+        )}
     </>
   );
 };

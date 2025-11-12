@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface TopicModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface TopicModalProps {
 const TopicModal: React.FC<TopicModalProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const { t } = useTranslation();
 
   const isEditing = !!initialData;
 
@@ -38,18 +40,18 @@ const TopicModal: React.FC<TopicModalProps> = ({ isOpen, onClose, onSubmit, init
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={onClose}>
       <div className="bg-[#1C162D] rounded-xl border border-gray-800 w-full max-w-2xl" onClick={e => e.stopPropagation()}>
         <form onSubmit={handleSubmit} className="p-8">
-          <h2 className="text-2xl font-bold mb-6 text-white">{isEditing ? 'Edit Topic' : 'Create New Topic'}</h2>
+          <h2 className="text-2xl font-bold mb-6 text-white">{isEditing ? t('modals.editTopic') : t('modals.createTopic')}</h2>
           <div className="space-y-4">
             <input
               type="text"
-              placeholder="Topic Title"
+              placeholder={t('modals.topicTitle')}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
               className="w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white"
             />
             <textarea
-              placeholder="What's on your mind?"
+              placeholder={t('modals.topicPlaceholder')}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               required
@@ -58,8 +60,8 @@ const TopicModal: React.FC<TopicModalProps> = ({ isOpen, onClose, onSubmit, init
             />
           </div>
           <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-800">
-            <button type="button" onClick={onClose} className="text-gray-300 font-bold py-2 px-4 rounded-lg transition-colors hover:bg-gray-700">Cancel</button>
-            <button type="submit" className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-6 rounded-lg transition-colors">{isEditing ? 'Save Changes' : 'Create Topic'}</button>
+            <button type="button" onClick={onClose} className="text-gray-300 font-bold py-2 px-4 rounded-lg transition-colors hover:bg-gray-700">{t('modals.cancel')}</button>
+            <button type="submit" className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-6 rounded-lg transition-colors">{isEditing ? t('modals.saveChanges') : t('modals.createTopic')}</button>
           </div>
         </form>
       </div>

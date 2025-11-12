@@ -146,9 +146,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ games, onAddNewGame }) 
                 <div className="space-y-4">
                     {topGames.map((game) => (
                         <div key={game.id} className="flex items-center gap-4">
-                            <img src={game.verticalImageUrl} alt={game.title} className="w-12 h-16 object-cover rounded-md flex-shrink-0" />
+                            <img src={game.verticalImageUrl} alt={game.title.en} className="w-12 h-16 object-cover rounded-md flex-shrink-0" />
                             <div>
-                                <h4 className="font-semibold text-white">{game.title}</h4>
+                                <h4 className="font-semibold text-white">{game.title.en}</h4>
                                 <p className="text-sm text-brand-gray">{Math.floor(Math.random() * (100000 - 30000 + 1) + 30000).toLocaleString()} downloads</p>
                             </div>
                         </div>

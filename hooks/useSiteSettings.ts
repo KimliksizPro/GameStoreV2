@@ -1,9 +1,10 @@
 
 import { useState, useEffect } from 'react';
+import { LocalizedString } from '../types';
 
 export interface SiteSettings {
-  siteName: string;
-  siteSlogan: string;
+  siteName: LocalizedString;
+  siteSlogan: LocalizedString;
   themeColor: 'purple' | 'blue' | 'green';
   showFeaturedSection: boolean;
   maintenanceMode: boolean;
@@ -12,8 +13,8 @@ export interface SiteSettings {
 
 const SETTINGS_STORAGE_KEY = 'site_settings';
 const defaultSettings: SiteSettings = {
-  siteName: 'Semih',
-  siteSlogan: 'Your Ultimate Game Destination',
+  siteName: { en: 'Semih', tr: 'Semih' },
+  siteSlogan: { en: 'Your Ultimate Game Destination', tr: 'Nihai Oyun Hedefiniz' },
   themeColor: 'purple',
   showFeaturedSection: true,
   maintenanceMode: false,

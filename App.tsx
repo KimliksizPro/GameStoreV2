@@ -18,9 +18,11 @@ import { useGames } from './hooks/useGames';
 import { useSiteSettings, SiteSettings } from './hooks/useSiteSettings';
 import { useForum } from './hooks/useForum';
 import { useAuth } from './hooks/useAuth';
+import { useRequestedGames } from './hooks/useRequestedGames';
 import { ToastProvider, useToast } from './hooks/useToast';
+import { LanguageProvider, useTranslation } from './hooks/useTranslation';
 import ToastContainer from './components/ToastContainer';
-import { Game, ForumTopic, ForumComment, User } from './types';
+import { Game, ForumTopic, ForumComment, User, RequestedGame } from './types';
 
 
 type View = {
@@ -47,7 +49,8 @@ const AppContent: React.FC = () => {
   const { games, loading: gamesLoading, addGame, updateGame, deleteGame, getGameById } = useGames();
   const { settings, loading: settingsLoading, updateSettings } = useSiteSettings();
   const { topics, loading: forumLoading, getTopicById, addTopic, updateTopic, addComment, deleteTopic } = useForum();
-  const { currentUser, users, login, signup, logout, loadingAuth, updateUser, deleteUser } = useAuth();
+  const { currentUser, users, login, signup, logout, loadingAuth, updateUser, deleteUser, addUserByAdmin } = useAuth();
+  const { requestedGames, loading: requestedGamesLoading, addRequestedGame, deleteRequestedGame } = useRequestedGames();
   const [view, setView] = useState<View>({ page: 'home', id: null });
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllGames, setShowAllGames] = useState(false);
@@ -58,10 +61,11 @@ const AppContent: React.FC = () => {
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [topicToEdit, setTopicToEdit] = useState<ForumTopic | null>(null);
   const { showToast } = useToast();
+  const { t, language } = useTranslation();
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
 
-  const loading = gamesLoading || settingsLoading || forumLoading || loadingAuth;
+  const loading = gamesLoading || settingsLoading || forumLoading || loadingAuth || requestedGamesLoading;
 
   useEffect(() => {
     if (!headerRef.current) return;
@@ -101,10 +105,10 @@ const AppContent: React.FC = () => {
     if (currentUser?.role === 'admin') {
       setView({ page: 'admin' });
     } else if (!currentUser) {
-      showToast('You must be logged in as an admin to access this page.', 'error');
+      showToast(t('toasts.loginRequired'), 'error');
       setIsLoginModalOpen(true);
     } else {
-      showToast('You do not have permission to access the admin panel.', 'error');
+      showToast(t('toasts.permissionDenied'), 'error');
     }
   };
   const navigateToRequestGame = () => setView({ page: 'request' });
@@ -126,14 +130,14 @@ const AppContent: React.FC = () => {
   const handleUserLogin = (username: string, password: string):boolean => {
     const user = login(username, password);
     if(user) {
-        showToast(`Welcome back, ${user.username}!`, 'success');
+        showToast(t('toasts.welcomeBack', { username: user.username }), 'success');
         return true;
     }
     return false; // Error message is shown in modal
   };
 
-  const handleUserSignup = async (username: string, password: string, avatarUrl: string) => {
-    const result = await signup(username, password, avatarUrl);
+  const handleUserSignup = async (username: string, email: string, password: string, avatarUrl: string) => {
+    const result = await signup(username, email, password, avatarUrl);
     showToast(result.message, result.success ? 'success' : 'error');
     return result;
   };
@@ -144,33 +148,32 @@ const AppContent: React.FC = () => {
     if (wasAdmin && view.page === 'admin') {
       navigateToHome();
     }
-    showToast('You have been logged out.', 'info');
+    showToast(t('toasts.loggedOut'), 'info');
   };
-
 
   const handleAddGame = (game: Omit<Game, 'id'>) => {
     addGame(game);
-    showToast(`Game "${game.title}" added successfully!`, 'success');
+    showToast(t('toasts.gameAdded', { title: game.title[language] }), 'success');
   }
 
   const handleUpdateGame = (game: Game) => {
     updateGame(game);
-    showToast(`Game "${game.title}" updated successfully!`, 'success');
+    showToast(t('toasts.gameUpdated', { title: game.title[language] }), 'success');
   }
 
   const handleDeleteGame = (gameId: string) => {
     const game = getGameById(gameId);
     if(game) {
       deleteGame(gameId);
-      showToast(`Game "${game.title}" has been deleted.`, 'success');
+      showToast(t('toasts.gameDeleted', { title: game.title[language] }), 'success');
     } else {
-      showToast('Error: Could not find game to delete.', 'error');
+      showToast(t('toasts.gameDeleteError'), 'error');
     }
   }
 
   const handleSaveSettings = (newSettings: SiteSettings) => {
     updateSettings(newSettings);
-    showToast('Site settings updated successfully!', 'success');
+    showToast(t('toasts.settingsUpdated'), 'success');
   };
   
   const handleOpenEditTopicModal = (topic: ForumTopic) => {
@@ -179,7 +182,7 @@ const AppContent: React.FC = () => {
         return;
     }
     if (topic.authorId !== currentUser.id && currentUser.role !== 'admin') {
-        showToast("You can only edit your own topics.", "error");
+        showToast(t('toasts.editOwnTopics'), "error");
         return;
     }
     setTopicToEdit(topic);
@@ -191,57 +194,101 @@ const AppContent: React.FC = () => {
       setIsLoginModalOpen(true);
       return;
     }
+    // For simplicity, new topics are created with same content for both languages
+    const newTopicData = {
+      title: { en: data.title, tr: data.title },
+      content: { en: data.content, tr: data.content },
+    };
     const newTopicId = addTopic({
-      ...data,
+      ...newTopicData,
       authorId: currentUser.id,
       authorName: currentUser.username,
       avatarUrl: currentUser.avatarUrl,
     });
-    showToast('Topic created successfully!', 'success');
+    showToast(t('toasts.topicCreated'), 'success');
     setIsTopicModalOpen(false);
     navigateToTopic(newTopicId);
   };
   
   const handleUpdateTopic = (topicId: string, data: { title: string; content: string }) => {
-    updateTopic(topicId, data);
-    showToast('Topic updated successfully!', 'success');
+    // This updates only the current language's content. A more complex modal would be needed for full multilingual editing.
+    const topic = getTopicById(topicId);
+    if(!topic) return;
+
+    const updatedTopicData = {
+        title: { ...topic.title, [language]: data.title },
+        content: { ...topic.content, [language]: data.content }
+    };
+
+    updateTopic(topicId, updatedTopicData);
+    showToast(t('toasts.topicUpdated'), 'success');
     setIsTopicModalOpen(false);
     setTopicToEdit(null);
   };
 
   const handleAddComment = (topicId: string, commentData: Omit<ForumComment, 'id' | 'createdAt'>) => {
     addComment(topicId, commentData);
-    showToast('Reply posted!', 'success');
+    showToast(t('toasts.replyPosted'), 'success');
   };
   
   const handleDeleteTopic = (topicId: string) => {
     const topic = getTopicById(topicId);
     if (!topic) {
-        showToast('Error: Topic not found.', 'error');
+        showToast(t('toasts.topicDeleteError'), 'error');
         return;
     }
     if (!currentUser) {
-        showToast('You must be logged in to delete topics.', 'error');
+        showToast(t('toasts.loginToDelete'), 'error');
         setIsLoginModalOpen(true);
         return;
     }
     // Authorization check
     if (topic.authorId !== currentUser.id && currentUser.role !== 'admin') {
-        showToast('You can only delete your own topics.', 'error');
+        showToast(t('toasts.deleteOwnTopics'), 'error');
         return;
     }
 
-    if (window.confirm(`Are you sure you want to delete this topic: "${topic.title}"?`)) {
+    if (window.confirm(t('toasts.confirmDelete', { title: topic.title[language] }))) {
         deleteTopic(topicId).then(() => {
-            showToast('Topic deleted successfully!', 'success');
+            showToast(t('toasts.topicDeleted'), 'success');
             if (view.page === 'topic' && view.id === topicId) {
                 navigateToForum();
             }
         }).catch((error) => {
             console.error("Failed to delete topic:", error);
-            showToast('An error occurred while deleting the topic.', 'error');
+            showToast(t('toasts.topicDeleteFailed'), 'error');
         });
     }
+  };
+  
+  const handleRequestGame = async (data: { gameTitle: string; reason: string }) => {
+    if (!currentUser) {
+      showToast(t('toasts.loginToRequest'), 'error');
+      setIsLoginModalOpen(true);
+      return;
+    }
+    const result = await addRequestedGame(data, currentUser);
+    if (result.success) {
+      showToast(t('toasts.requestSubmitted'), 'success');
+    } else {
+      showToast(t('toasts.requestFailed'), 'error');
+    }
+  };
+
+  const handleDeleteRequestedGame = async (requestId: string) => {
+    const result = await deleteRequestedGame(requestId);
+    if (result.success) {
+      showToast('Game request deleted successfully.', 'success');
+    } else {
+      showToast('Failed to delete game request.', 'error');
+    }
+  };
+
+
+  const handleAddUser = async (newUserData: Omit<User, 'id'>) => {
+    const result = await addUserByAdmin(newUserData);
+    showToast(result.message, result.success ? 'success' : 'error');
+    return result;
   };
 
   const handleUpdateUser = (updatedUser: User) => {
@@ -266,28 +313,33 @@ const AppContent: React.FC = () => {
 
   const featuredGames = useMemo(() => games.filter(g => g.featured), [games]);
   
-  const allGamesSorted = useMemo(() => [...games].sort((a, b) => a.title.localeCompare(b.title)), [games]);
+  const allGamesSorted = useMemo(() => [...games].sort((a, b) => a.title[language].localeCompare(b.title[language])), [games, language]);
   
-  const savaşOyunları = useMemo(() => games.filter(g => g.category === 'Savaş Oyunları'), [games]);
-  const ikiDOyunlar = useMemo(() => games.filter(g => g.category === '2D Oyunlar'), [games]);
-  const arabaOyunları = useMemo(() => games.filter(g => g.category === 'Araba Yarışı'), [games]);
-  const simulasyonOyunları = useMemo(() => games.filter(g => g.category === 'Simülasyon'), [games]);
+  const savaşOyunları = useMemo(() => games.filter(g => g.category.en === 'War Games'), [games]);
+  const ikiDOyunlar = useMemo(() => games.filter(g => g.category.en === '2D Games'), [games]);
+  const arabaOyunları = useMemo(() => games.filter(g => g.category.en === 'Car Racing'), [games]);
+  const simulasyonOyunları = useMemo(() => games.filter(g => g.category.en === 'Simulation'), [games]);
 
   const filteredGames = useMemo(() => {
     if (!searchQuery) return [];
     
     const lowercasedQuery = searchQuery.toLowerCase();
     return games.filter(game =>
-      game.title.toLowerCase().includes(lowercasedQuery) ||
-      game.genre.toLowerCase().includes(lowercasedQuery) ||
-      game.category.toLowerCase().includes(lowercasedQuery)
+      game.title[language].toLowerCase().includes(lowercasedQuery) ||
+      game.genre[language].toLowerCase().includes(lowercasedQuery) ||
+      game.category[language].toLowerCase().includes(lowercasedQuery)
     );
-  }, [searchQuery, games]);
+  }, [searchQuery, games, language]);
+
+  const userRequestedGames = useMemo(() => {
+    if (!currentUser) return [];
+    return requestedGames.filter(req => req.userId === currentUser.id);
+  }, [requestedGames, currentUser]);
   
   if (view.page === 'admin') {
      if (currentUser?.role !== 'admin') {
        // This should be handled by navigateToAdmin, but as a fallback:
-       showToast('Access denied.', 'error');
+       showToast(t('toasts.accessDenied'), 'error');
        navigateToHome();
        return null;
      }
@@ -302,8 +354,11 @@ const AppContent: React.FC = () => {
         onNavigateHome={navigateToHome}
         users={users}
         currentUser={currentUser}
+        onAddUser={handleAddUser}
         onUpdateUser={handleUpdateUser}
         onDeleteUser={handleDeleteUser}
+        requestedGames={requestedGames}
+        onDeleteRequestedGame={handleDeleteRequestedGame}
       />;
   }
 
@@ -312,20 +367,20 @@ const AppContent: React.FC = () => {
     const noSearchResults = searchQuery && filteredGames.length === 0;
 
     if (showAllGames && !searchQuery) {
-        return <div className="my-16"><GameSection title="All Games" games={allGamesSorted} onGameClick={navigateToGame} /></div>;
+        return <div className="my-16"><GameSection title={t('header.allGames')} games={allGamesSorted} onGameClick={navigateToGame} /></div>;
     }
     if (hasSearchResults) {
-        return <div className="my-16"><GameSection title="Search Results" games={filteredGames} onGameClick={navigateToGame} /></div>;
+        return <div className="my-16"><GameSection title={t('home.searchResults')} games={filteredGames} onGameClick={navigateToGame} /></div>;
     }
     if (noSearchResults) {
-        return <p className="text-center text-brand-gray text-lg py-16 animate-fadeIn">No games found for "{searchQuery}"</p>;
+        return <p className="text-center text-brand-gray text-lg py-16 animate-fadeIn">{t('home.noResults', { query: searchQuery })}</p>;
     }
     return (
       <>
-        <div className="my-16"><GameSection title="Savaş Oyunları" games={savaşOyunları} onGameClick={navigateToGame} /></div>
-        <div className="my-16"><GameSection title="2D Oyunlar" games={ikiDOyunlar} onGameClick={navigateToGame} /></div>
-        <div className="my-16"><GameSection title="Araba Yarışı" games={arabaOyunları} onGameClick={navigateToGame} /></div>
-        <div className="my-16"><GameSection title="Simülasyon" games={simulasyonOyunları} onGameClick={navigateToGame} /></div>
+        <div className="my-16"><GameSection title={t('home.warGames')} games={savaşOyunları} onGameClick={navigateToGame} /></div>
+        <div className="my-16"><GameSection title={t('home.twoDGames')} games={ikiDOyunlar} onGameClick={navigateToGame} /></div>
+        <div className="my-16"><GameSection title={t('home.carRacing')} games={arabaOyunları} onGameClick={navigateToGame} /></div>
+        <div className="my-16"><GameSection title={t('home.simulation')} games={simulasyonOyunları} onGameClick={navigateToGame} /></div>
       </>
     );
   };
@@ -352,7 +407,7 @@ const AppContent: React.FC = () => {
     switch (view.page) {
       case 'game':
         const game = getGameById(view.id || null);
-        if (game) return <GameDetail game={game} onBack={navigateToHome} />;
+        if (game) return <GameDetail game={game} onBack={navigateToHome} currentUser={currentUser} onRequestLogin={() => setIsLoginModalOpen(true)} />;
         navigateToHome();
         return null;
        case 'forum':
@@ -380,12 +435,19 @@ const AppContent: React.FC = () => {
         navigateToForum();
         return null;
       case 'request':
-        return <RequestGame onBack={navigateToHome} />;
+        return <RequestGame 
+                  onBack={navigateToHome} 
+                  currentUser={currentUser}
+                  onRequestSubmit={handleRequestGame}
+                  requestedGames={userRequestedGames}
+                  loading={requestedGamesLoading}
+                  onRequestLogin={() => setIsLoginModalOpen(true)}
+                />;
       case 'home':
       default:
         return (
           <>
-            {settings.showFeaturedSection && <Hero games={featuredGames} onViewGame={navigateToGame} />}
+            {settings.showFeaturedSection && <Hero games={featuredGames} onViewGame={navigateToGame} currentUser={currentUser} onRequestLogin={() => setIsLoginModalOpen(true)} />}
             {renderHomePageContent()}
           </>
         );
@@ -398,7 +460,7 @@ const AppContent: React.FC = () => {
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-brand-purple mb-6">
               <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2ZM11.002 11.002V7.002C11.002 6.449 11.449 6.002 12 6.002C12.553 6.002 13.002 6.449 13.002 7.002V11.002H17.002C17.555 11.002 18.002 11.449 18.002 12C18.002 12.553 17.555 13.002 17.002 13.002H13.002V17.002C13.002 17.555 12.553 18.002 12 18.002C11.449 18.002 11.002 17.555 11.002 17.002V13.002H7.002C6.449 13.002 6.002 12.553 6.002 12C6.002 11.449 6.449 11.002 7.002 11.002H11.002Z" fill="currentColor"/>
             </svg>
-            <h1 className="text-4xl font-bold mb-4">{settings.siteName} is Under Maintenance</h1>
+            <h1 className="text-4xl font-bold mb-4">{settings.siteName[language]} is Under Maintenance</h1>
             <p className="text-xl text-brand-gray">We are currently performing scheduled maintenance.</p>
             <p className="text-brand-gray">Please check back later!</p>
         </div>
@@ -409,8 +471,8 @@ const AppContent: React.FC = () => {
     <div className="bg-brand-dark text-white min-h-screen font-sans">
       <Header
           ref={headerRef} 
-          siteName={settings.siteName}
-          siteSlogan={settings.siteSlogan}
+          siteName={settings.siteName[language]}
+          siteSlogan={settings.siteSlogan[language]}
           onNavigateHome={handleLogoClick}
           onNavigateAdmin={navigateToAdmin}
           onShowAllGames={handleShowAllGames}
@@ -464,9 +526,9 @@ const AppContent: React.FC = () => {
                 }
               }
           }}
-          initialData={topicToEdit ? { title: topicToEdit.title, content: topicToEdit.content } : undefined}
+          initialData={topicToEdit ? { title: topicToEdit.title[language], content: topicToEdit.content[language] } : undefined}
       />
-      <Footer siteName={settings.siteName} contactEmail={settings.contactEmail} />
+      <Footer siteName={settings.siteName[language]} contactEmail={settings.contactEmail} />
       <BackToTopButton />
     </div>
   );
@@ -475,8 +537,10 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => (
   <ToastProvider>
-    <AppContent />
-    <ToastContainer />
+    <LanguageProvider>
+      <AppContent />
+      <ToastContainer />
+    </LanguageProvider>
   </ToastProvider>
 );
 

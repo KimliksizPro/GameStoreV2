@@ -38,6 +38,19 @@ const SiteSettings: React.FC<SiteSettingsProps> = ({ currentSettings, onSave }) 
         const { name, value } = e.target;
         setSettings(prev => ({...prev, [name]: value}));
     };
+    
+    const handleLocalizedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        const [field, lang] = name.split('.');
+        setSettings(prev => ({
+            ...prev,
+            [field]: {
+                ...(prev[field as keyof SiteSettingsType] as object),
+                [lang]: value,
+            }
+        }));
+    };
+
 
     const handleToggle = (name: keyof SiteSettingsType, checked: boolean) => {
          setSettings(prev => ({ ...prev, [name]: checked }));
@@ -62,10 +75,16 @@ const SiteSettings: React.FC<SiteSettingsProps> = ({ currentSettings, onSave }) 
                     <h2 className="text-xl font-bold border-b border-gray-700 pb-4 mb-4">General</h2>
                     <div className="divide-y divide-gray-800">
                         <SettingRow title="Site Name" description="This name appears in the header, footer, and browser tab.">
-                             <input type="text" name="siteName" id="siteName" value={settings.siteName} onChange={handleChange} className="w-full md:w-1/2 bg-brand-light-gray/20 rounded-md p-2 border border-gray-700 focus:ring-brand-purple focus:border-brand-purple"/>
+                            <div className="space-y-3">
+                                <input type="text" name="siteName.tr" placeholder="Site Adı (TR)" value={settings.siteName.tr} onChange={handleLocalizedChange} className="w-full md:w-1/2 bg-brand-light-gray/20 rounded-md p-2 border border-gray-700 focus:ring-brand-purple focus:border-brand-purple"/>
+                                <input type="text" name="siteName.en" placeholder="Site Name (EN)" value={settings.siteName.en} onChange={handleLocalizedChange} className="w-full md:w-1/2 bg-brand-light-gray/20 rounded-md p-2 border border-gray-700 focus:ring-brand-purple focus:border-brand-purple"/>
+                             </div>
                         </SettingRow>
                         <SettingRow title="Site Slogan" description="A short tagline that appears under the site name in the header.">
-                             <input type="text" name="siteSlogan" id="siteSlogan" value={settings.siteSlogan} onChange={handleChange} className="w-full md:w-1/2 bg-brand-light-gray/20 rounded-md p-2 border border-gray-700 focus:ring-brand-purple focus:border-brand-purple"/>
+                            <div className="space-y-3">
+                                <input type="text" name="siteSlogan.tr" placeholder="Site Sloganı (TR)" value={settings.siteSlogan.tr} onChange={handleLocalizedChange} className="w-full md:w-1/2 bg-brand-light-gray/20 rounded-md p-2 border border-gray-700 focus:ring-brand-purple focus:border-brand-purple"/>
+                                <input type="text" name="siteSlogan.en" placeholder="Site Slogan (EN)" value={settings.siteSlogan.en} onChange={handleLocalizedChange} className="w-full md:w-1/2 bg-brand-light-gray/20 rounded-md p-2 border border-gray-700 focus:ring-brand-purple focus:border-brand-purple"/>
+                            </div>
                         </SettingRow>
                         <SettingRow title="Contact Email" description="The email address for user support and contact inquiries.">
                             <input type="email" name="contactEmail" id="contactEmail" value={settings.contactEmail} onChange={handleChange} className="w-full md:w-1/2 bg-brand-light-gray/20 rounded-md p-2 border border-gray-700 focus:ring-brand-purple focus:border-brand-purple"/>

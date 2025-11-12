@@ -1,5 +1,6 @@
 import React from 'react';
 import { Game } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface GameCardProps {
   game: Game;
@@ -7,6 +8,7 @@ interface GameCardProps {
 }
 
 const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
+  const { language } = useTranslation();
   return (
     <div 
       className="group relative cursor-pointer overflow-hidden rounded-xl shadow-lg shadow-black/30 transition-all duration-300 ease-in-out hover:shadow-2xl hover:shadow-brand-purple/40 hover:-translate-y-2"
@@ -14,7 +16,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
     >
       <img 
         src={game.verticalImageUrl} 
-        alt={game.title}
+        alt={game.title[language]}
         className="w-full aspect-[3/4] object-cover transition-transform duration-300 group-hover:scale-105"
       />
       
@@ -28,8 +30,8 @@ const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
 
       {/* Text Content */}
       <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-        <h3 className="font-bold text-lg truncate">{game.title}</h3>
-        <p className="text-sm text-brand-gray">{game.category}</p>
+        <h3 className="font-bold text-lg truncate">{game.title[language]}</h3>
+        <p className="text-sm text-brand-gray">{game.category[language]}</p>
       </div>
     </div>
   );
