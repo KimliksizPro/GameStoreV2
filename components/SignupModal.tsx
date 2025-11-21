@@ -1,12 +1,14 @@
 
+
 import React, { useState } from 'react';
 import { availableAvatars } from '../data/avatars';
 import { useTranslation } from '../hooks/useTranslation';
+import { User } from '../types';
 
 interface SignupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSignup: (username: string, email: string, password: string, avatarUrl: string) => Promise<{ success: boolean; message: string; }>;
+  onSignup: (username: string, email: string, password: string, avatarUrl: string) => Promise<{ success: boolean; message: string; user: User | null; }>;
   onSwitchToLogin: () => void;
 }
 

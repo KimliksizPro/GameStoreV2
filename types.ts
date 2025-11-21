@@ -1,4 +1,5 @@
 
+
 export type LocalizedString = {
   en: string;
   tr: string;
@@ -11,14 +12,18 @@ export interface User {
   password: string;
   avatarUrl: string;
   role: 'admin' | 'user';
+  isVerified: boolean;
 }
 
 export interface Game {
   id: string;
   title: LocalizedString;
   genre: LocalizedString;
+  developer: LocalizedString;
+  publisher: LocalizedString;
   verticalImageUrl: string;
   horizontalImageUrl: string;
+  trailerUrl?: string;
   downloadUrl: string;
   releaseDate: string;
   description: LocalizedString;
@@ -28,6 +33,10 @@ export interface Game {
   patchUrl?: string;
   screenshots?: string[];
   platform?: string;
+  systemRequirements?: {
+    minimum: LocalizedString;
+    recommended: LocalizedString;
+  };
 }
 
 export interface ForumComment {

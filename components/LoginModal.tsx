@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -7,9 +8,10 @@ interface LoginModalProps {
   onClose: () => void;
   onLogin: (username: string, password: string) => boolean;
   onSwitchToSignup: () => void;
+  onForgotPassword: () => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin, onSwitchToSignup }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin, onSwitchToSignup, onForgotPassword }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -66,6 +68,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin, onSwi
                 required
                 className="w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white"
               />
+               <div className="text-right mt-2">
+                  <button type="button" onClick={onForgotPassword} className="text-sm font-medium text-brand-light-purple hover:underline focus:outline-none">
+                      {t('modals.forgotPassword')}
+                  </button>
+              </div>
             </div>
           </div>
           

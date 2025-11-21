@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { availableAvatars } from '../data/avatars';
@@ -11,6 +12,16 @@ interface UserEditModalProps {
   user: User | Omit<User, 'id'>;
   currentUser: User | null;
 }
+
+const ToggleSwitch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void; name: string, label: string }> = ({ checked, onChange, name, label }) => (
+     <div className="flex items-center justify-between">
+        <label className="block text-sm font-medium text-brand-light-purple">{label}</label>
+        <label htmlFor={name} className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id={name} name={name} className="sr-only peer" checked={checked} onChange={e => onChange(e.target.checked)} />
+            <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+        </label>
+    </div>
+);
 
 const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, user, currentUser }) => {
     const [formData, setFormData] = useState<User | Omit<User, 'id'>>(user);
@@ -25,6 +36,10 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+    
+    const handleToggle = (name: keyof (User | Omit<User, 'id'>), checked: boolean) => {
+         setFormData(prev => ({ ...prev, [name]: checked }));
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,7 +52,7 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={onClose}>
-            <div className="bg-[#1C162D] rounded-xl border border-gray-800 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="bg-[#1C162D] rounded-xl border border-gray-800 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <form onSubmit={handleSubmit} className="p-8">
                     <h2 className="text-2xl font-bold mb-6 text-white">
                       {isEditing ? `Edit User: ${(user as User).username}` : 'Add New User'}
@@ -61,20 +76,25 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
                             <label htmlFor="password" className="block text-sm font-medium text-brand-light-purple mb-2">Password</label>
                             <input id="password" name="password" type="text" placeholder={isEditing ? 'Unchanged' : 'Enter password'} value={formData.password} onChange={handleChange} required={!isEditing} className="form-input w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white" />
                         </div>
-                        <div>
-                            <label htmlFor="role" className="block text-sm font-medium text-brand-light-purple mb-2">Role</label>
-                            <select
-                                id="role"
-                                name="role"
-                                value={formData.role}
-                                onChange={handleChange}
-                                disabled={isEditingSelf}
-                                className="form-select w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                            {isEditingSelf && <p className="text-xs text-yellow-400 mt-2">You cannot change your own role.</p>}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="role" className="block text-sm font-medium text-brand-light-purple mb-2">Role</label>
+                                <select
+                                    id="role"
+                                    name="role"
+                                    value={formData.role}
+                                    onChange={handleChange}
+                                    disabled={isEditingSelf}
+                                    className="form-select w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                                {isEditingSelf && <p className="text-xs text-yellow-400 mt-2">You cannot change your own role.</p>}
+                            </div>
+                             <div className="bg-[#2f2348] p-3 rounded-lg border border-gray-700">
+                               <ToggleSwitch name="isVerified" label="Verified" checked={formData.isVerified} onChange={(checked) => handleToggle('isVerified', checked)} />
+                            </div>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-brand-light-purple mb-2">Avatar</label>

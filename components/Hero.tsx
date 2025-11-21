@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Game, User } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
@@ -42,7 +43,7 @@ const Hero: React.FC<HeroProps> = ({ games, onViewGame, currentUser, onRequestLo
   }
   
   const game = games[currentIndex];
-  const description = game.description[language];
+  const description = game?.description?.[language] || '';
 
   const handleDownloadClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!currentUser) {
@@ -54,36 +55,40 @@ const Hero: React.FC<HeroProps> = ({ games, onViewGame, currentUser, onRequestLo
   return (
     <section className="mt-12 relative">
       <div 
-        className="relative rounded-2xl overflow-hidden h-[400px] md:h-[500px] flex items-center p-8 md:p-16 bg-cover bg-center transition-all duration-1000 ease-in-out" 
-        style={{ 
-          backgroundImage: `url('${game.horizontalImageUrl}')`,
-        }}
+        className="relative rounded-2xl h-[400px] md:h-[500px] flex items-center p-8 md:p-16 transition-all duration-1000 ease-in-out"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
         <div 
-            className="absolute inset-0 bg-brand-purple opacity-0 mix-blend-overlay animate-pulse" 
+            className="absolute inset-0 bg-cover bg-center rounded-2xl"
+            style={{ backgroundImage: `url('${game.horizontalImageUrl}')` }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent rounded-2xl"></div>
+        <div 
+            className="absolute inset-0 bg-brand-purple opacity-0 mix-blend-overlay animate-pulse rounded-2xl" 
             style={{ animationDuration: '4s', animationDelay: `${currentIndex * 100}ms`}}
         ></div>
         
         <div key={game.id} className="relative z-10 max-w-xl text-white animate-fadeIn">
           <h1 className="text-4xl md:text-6xl font-extrabold mb-4 leading-tight">
-            {game.title[language]}
+            {game?.title?.[language]}
           </h1>
           <p className="text-lg md:text-xl text-gray-300 mb-8">
             {description.length > 150 ? `${description.substring(0, 150)}...` : description}
           </p>
           <div className="flex flex-wrap gap-4">
-            <a 
-              href={currentUser ? game.downloadUrl : '#'}
-              onClick={handleDownloadClick}
-              target={currentUser ? "_blank" : "_self"}
-              rel="noopener noreferrer"
-              title={currentUser ? t('hero.download') : t('hero.loginToDownload')}
-              className="flex items-center justify-center whitespace-nowrap bg-brand-purple hover:bg-violet-500 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 hover:drop-shadow-[0_4px_18px_rgba(109,40,217,0.5)]"
-            >
-              <DownloadIcon />
-              <span>{t('hero.download')}</span>
-            </a>
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-brand-purple rounded-lg blur-md opacity-0 group-hover:opacity-75 transition duration-300 ease-in-out"></div>
+              <a 
+                href={currentUser ? game.downloadUrl : '#'}
+                onClick={handleDownloadClick}
+                target={currentUser ? "_blank" : "_self"}
+                rel="noopener noreferrer"
+                title={currentUser ? t('hero.download') : t('hero.loginToDownload')}
+                className="relative flex items-center justify-center whitespace-nowrap bg-brand-purple hover:bg-violet-500 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105"
+              >
+                <DownloadIcon />
+                <span>{t('hero.download')}</span>
+              </a>
+            </div>
             <button onClick={() => onViewGame(game.id)} className="bg-gray-900/50 backdrop-blur-sm border border-white/20 hover:bg-gray-900/75 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out">
               {t('hero.viewGame')}
             </button>

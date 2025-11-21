@@ -1,8 +1,9 @@
 
+
 import React from 'react';
 import { useToast } from '../hooks/useToast';
 
-const Toast: React.FC<{ message: string; type: 'success' | 'error' | 'info'; onDismiss: () => void }> = ({ message, type, onDismiss }) => {
+const Toast: React.FC<{ message: string; type: 'success' | 'error' | 'info'; onDismiss: () => void; onClick?: () => void }> = ({ message, type, onDismiss, onClick }) => {
   const baseClasses = 'relative w-full max-w-sm p-4 rounded-lg shadow-lg text-white flex items-center gap-3 transition-all duration-300 transform';
   const typeClasses = {
     success: 'bg-green-500/90 backdrop-blur-sm border border-green-400/50',
@@ -19,11 +20,30 @@ const Toast: React.FC<{ message: string; type: 'success' | 'error' | 'info'; onD
     }
   }
 
-  return (
-    <div className={`${baseClasses} ${typeClasses[type]} animate-fadeInUp`}>
+  const handleDismiss = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDismiss();
+  }
+
+  const content = (
+    <>
       <Icon />
       <span className="flex-grow">{message}</span>
-      <button onClick={onDismiss} className="text-white/70 hover:text-white">&times;</button>
+      <button onClick={handleDismiss} className="text-white/70 hover:text-white flex-shrink-0">&times;</button>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button onClick={() => { onClick(); onDismiss(); }} className={`${baseClasses} ${typeClasses[type]} animate-fadeInUp text-left`}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={`${baseClasses} ${typeClasses[type]} animate-fadeInUp`}>
+      {content}
     </div>
   );
 };
@@ -39,6 +59,7 @@ const ToastContainer: React.FC = () => {
           key={toast.id}
           message={toast.message}
           type={toast.type}
+          onClick={toast.onClick}
           onDismiss={() => removeToast(toast.id)}
         />
       ))}

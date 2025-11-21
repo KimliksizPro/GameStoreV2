@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
 type ToastType = 'success' | 'error' | 'info';
@@ -7,11 +8,12 @@ interface Toast {
   id: number;
   message: string;
   type: ToastType;
+  onClick?: () => void;
 }
 
 interface ToastContextType {
   toasts: Toast[];
-  showToast: (message: string, type: ToastType) => void;
+  showToast: (message: string, type: ToastType, options?: { onClick?: () => void }) => void;
   removeToast: (id: number) => void;
 }
 
@@ -26,12 +28,17 @@ export const ToastProvider: React.FC<{children: React.ReactNode}> = ({ children 
   }, []);
 
   // FIX: Added `removeToast` to the dependency array to avoid stale closures.
-  const showToast = useCallback((message: string, type: ToastType) => {
+  const showToast = useCallback((message: string, type: ToastType, options?: { onClick?: () => void }) => {
     const id = Date.now();
-    setToasts(prevToasts => [...prevToasts, { id, message, type }]);
+    const newToast: Toast = { id, message, type, onClick: options?.onClick };
+    setToasts(prevToasts => [...prevToasts, newToast]);
+    
+    // Auto-dismiss only if it's not a clickable toast, or after a longer duration
+    const duration = options?.onClick ? 10000 : 5000;
+
     setTimeout(() => {
       removeToast(id);
-    }, 5000); // Auto-dismiss after 5 seconds
+    }, duration);
   }, [removeToast]);
 
   // FIX: Replaced JSX with React.createElement to be valid in a .ts file.

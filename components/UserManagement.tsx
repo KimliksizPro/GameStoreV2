@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { User } from '../types';
 import UserEditModal from './UserEditModal';
@@ -18,6 +19,7 @@ const emptyUser: Omit<User, 'id'> = {
   password: '',
   avatarUrl: availableAvatars[0],
   role: 'user',
+  isVerified: false,
 };
 
 
@@ -29,7 +31,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onA
     const filteredUsers = useMemo(() => {
         return users.filter(user =>
             user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchQuery.toLowerCase())
+            (user.email && user.email.toLowerCase().includes(searchQuery.toLowerCase()))
         );
     }, [users, searchQuery]);
 
@@ -99,6 +101,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onA
                         <th scope="col" className="px-6 py-3 font-semibold">User</th>
                         <th scope="col" className="px-6 py-3 font-semibold">Email</th>
                         <th scope="col" className="px-6 py-3 font-semibold">Role</th>
+                        <th scope="col" className="px-6 py-3 font-semibold">Status</th>
                         <th scope="col" className="px-6 py-3 font-semibold text-right">Actions</th>
                     </tr>
                 </thead>
@@ -114,6 +117,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onA
                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${user.role === 'admin' ? 'bg-primary/20 text-brand-light-purple' : 'bg-gray-700/50 text-gray-300'}`}>
                                     {user.role}
                                 </span>
+                            </td>
+                            <td className="px-6 py-4">
+                               {user.isVerified ? (
+                                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300">Verified</span>
+                                ) : (
+                                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-500/20 text-yellow-300">Unverified</span>
+                                )}
                             </td>
                             <td className="px-6 py-4 text-right">
                                 <button onClick={() => handleEditClick(user)} className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-primary/30"><span className="material-symbols-outlined text-base">edit</span></button>
@@ -141,11 +151,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onA
                         <div className="flex-1">
                             <div className="flex justify-between items-start">
                                 <h3 className="font-bold text-white">{user.username}</h3>
-                                <span className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${user.role === 'admin' ? 'bg-primary/20 text-brand-light-purple' : 'bg-gray-700/50 text-gray-300'}`}>
-                                    {user.role}
-                                </span>
+                                 {user.isVerified ? (
+                                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300">Verified</span>
+                                ) : (
+                                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-500/20 text-yellow-300">Unverified</span>
+                                )}
                             </div>
-                            <p className="text-sm text-gray-400 truncate">{user.email}</p>
+                             <p className="text-sm text-gray-400 truncate">{user.email}</p>
+                             <span className={`inline-block mt-1 px-2 py-1 text-xs font-semibold rounded-full capitalize ${user.role === 'admin' ? 'bg-primary/20 text-brand-light-purple' : 'bg-gray-700/50 text-gray-300'}`}>
+                                {user.role}
+                            </span>
                         </div>
                     </div>
                     <div className="flex justify-end items-center gap-2 pt-3 border-t border-gray-700/50">

@@ -16,7 +16,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
     >
       <img 
         src={game.verticalImageUrl} 
-        alt={game.title[language]}
+        alt={game.title?.[language]}
         className="w-full aspect-[3/4] object-cover transition-transform duration-300 group-hover:scale-105"
       />
       
@@ -30,8 +30,8 @@ const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
 
       {/* Text Content */}
       <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-        <h3 className="font-bold text-lg truncate">{game.title[language]}</h3>
-        <p className="text-sm text-brand-gray">{game.category[language]}</p>
+        <h3 className="font-bold text-lg truncate">{game.title?.[language]}</h3>
+        <p className="text-sm text-brand-gray">{game.category?.[language]}</p>
       </div>
     </div>
   );

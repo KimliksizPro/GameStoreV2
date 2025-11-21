@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -15,6 +17,8 @@ import TopicDetail from './components/TopicDetail';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
 import TopicModal from './components/TopicModal';
+import ForgotPasswordModal from './components/ForgotPasswordModal';
+import ResetPasswordModal from './components/ResetPasswordModal';
 import { useGames } from './hooks/useGames';
 import { useSiteSettings, SiteSettings } from './hooks/useSiteSettings';
 import { useForum } from './hooks/useForum';
@@ -46,11 +50,21 @@ const themeColorMap = {
     },
 };
 
+const EmailVerificationBanner: React.FC<{ user: User, onResend: (user: User) => void }> = ({ user, onResend }) => (
+    <div className="bg-yellow-500/20 text-yellow-300 p-3 text-center text-sm border-b-2 border-yellow-500/50">
+        Your email is not verified. Please check your inbox for a verification link.
+        <button onClick={() => onResend(user)} className="font-bold underline ml-2 hover:text-white">
+            Resend verification email
+        </button>
+    </div>
+);
+
+
 const AppContent: React.FC = () => {
   const { games, loading: gamesLoading, addGame, updateGame, deleteGame, getGameById } = useGames();
   const { settings, loading: settingsLoading, updateSettings } = useSiteSettings();
   const { topics, loading: forumLoading, getTopicById, addTopic, updateTopic, addComment, deleteTopic } = useForum();
-  const { currentUser, users, login, signup, logout, loadingAuth, updateUser, deleteUser, addUserByAdmin } = useAuth();
+  const { currentUser, users, login, signup, logout, loadingAuth, updateUser, deleteUser, addUserByAdmin, verifyUser, findUserByEmail, resetPassword } = useAuth();
   const { requestedGames, loading: requestedGamesLoading, addRequestedGame, deleteRequestedGame } = useRequestedGames();
   const [view, setView] = useState<View>({ page: 'home', id: null });
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,6 +72,10 @@ const AppContent: React.FC = () => {
   
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+  const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = useState(false);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [userToResetPassword, setUserToResetPassword] = useState<User | null>(null);
+
 
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [topicToEdit, setTopicToEdit] = useState<ForumTopic | null>(null);
@@ -123,18 +141,18 @@ const AppContent: React.FC = () => {
       if (view.page === 'game' && view.id) {
         const game = getGameById(view.id);
         if (game) {
-          title = `${game.title[language]} | ${siteName}`;
-          description = game.description[language].substring(0, 160);
+          title = `${game.title?.[language]} | ${siteName}`;
+          description = game.description?.[language]?.substring(0, 160) || '';
           imageUrl = game.horizontalImageUrl;
           canonicalUrl = `${baseUrl}?page=game&id=${game.id}`;
           structuredData = {
             "@context": "https://schema.org",
             "@type": "VideoGame",
-            "name": game.title[language],
-            "description": game.description[language],
+            "name": game.title?.[language],
+            "description": game.description?.[language],
             "image": game.horizontalImageUrl,
             "url": canonicalUrl,
-            "genre": game.genre[language],
+            "genre": game.genre?.[language],
             "operatingSystem": game.platform,
             "datePublished": game.releaseDate,
             "offers": {
@@ -155,8 +173,8 @@ const AppContent: React.FC = () => {
       } else if (view.page === 'topic' && view.id) {
         const topic = getTopicById(view.id);
         if (topic) {
-          title = `${topic.title[language]} | ${t('forum.title')} | ${siteName}`;
-          description = topic.content[language].substring(0, 160);
+          title = `${topic.title?.[language]} | ${t('forum.title')} | ${siteName}`;
+          description = topic.content?.[language]?.substring(0, 160) || '';
           canonicalUrl = `${baseUrl}?page=topic&id=${topic.id}`;
         }
       } else if (view.page === 'request') {
@@ -191,6 +209,16 @@ const AppContent: React.FC = () => {
 
     updateMetaTags();
   }, [view, settings, language, getGameById, getTopicById, t]);
+
+  useEffect(() => {
+    const handleContextmenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+    document.addEventListener('contextmenu', handleContextmenu);
+    return () => {
+      document.removeEventListener('contextmenu', handleContextmenu);
+    };
+  }, []);
 
 
   const navigateToHome = () => setView({ page: 'home' });
@@ -230,9 +258,28 @@ const AppContent: React.FC = () => {
     return false; // Error message is shown in modal
   };
 
+  const handleSendVerification = (user: User) => {
+    const message = `Verification email sent to ${user.email}. Click to verify. (DEMO)`;
+    showToast(message, 'info', {
+      onClick: async () => {
+        const success = await verifyUser(user.id);
+        if (success) {
+          showToast('Email verified successfully!', 'success');
+        } else {
+          showToast('Failed to verify email.', 'error');
+        }
+      },
+    });
+  };
+
   const handleUserSignup = async (username: string, email: string, password: string, avatarUrl: string) => {
     const result = await signup(username, email, password, avatarUrl);
-    showToast(result.message, result.success ? 'success' : 'error');
+    if (result.success && result.user) {
+      showToast(result.message, 'success');
+      handleSendVerification(result.user);
+    } else {
+      showToast(result.message, 'error');
+    }
     return result;
   };
 
@@ -244,6 +291,35 @@ const AppContent: React.FC = () => {
     }
     showToast(t('toasts.loggedOut'), 'info');
   };
+  
+  const handleRequestPasswordReset = (email: string) => {
+    const user = findUserByEmail(email);
+    if (user) {
+      const userForReset = user;
+      const message = `Password reset for ${email}. Click to reset. (DEMO)`;
+      showToast(message, 'info', {
+        onClick: () => {
+          setIsForgotPasswordModalOpen(false);
+          setUserToResetPassword(userForReset);
+          setIsResetPasswordModalOpen(true);
+        },
+      });
+    } else {
+      // Show a generic message to prevent user enumeration
+      showToast('If an account with that email exists, a reset link has been sent.', 'success');
+    }
+  };
+
+  const handlePasswordReset = async (userId: string, newPassword: string) => {
+    const result = await resetPassword(userId, newPassword);
+    showToast(result.message, result.success ? 'success' : 'error');
+    if (result.success) {
+      setIsResetPasswordModalOpen(false);
+      setUserToResetPassword(null);
+    }
+    return result;
+  };
+
 
   const handleAddGame = (game: Omit<Game, 'id'>) => {
     addGame(game);
@@ -259,7 +335,7 @@ const AppContent: React.FC = () => {
     const game = getGameById(gameId);
     if(game) {
       deleteGame(gameId);
-      showToast(t('toasts.gameDeleted', { title: game.title[language] }), 'success');
+      showToast(t('toasts.gameDeleted', { title: game.title?.[language] || 'game' }), 'success');
     } else {
       showToast(t('toasts.gameDeleteError'), 'error');
     }
@@ -342,7 +418,7 @@ const AppContent: React.FC = () => {
         return;
     }
 
-    if (window.confirm(t('toasts.confirmDelete', { title: topic.title[language] }))) {
+    if (window.confirm(t('toasts.confirmDelete', { title: topic.title?.[language] || 'this topic' }))) {
         deleteTopic(topicId).then(() => {
             showToast(t('toasts.topicDeleted'), 'success');
             if (view.page === 'topic' && view.id === topicId) {
@@ -407,21 +483,21 @@ const AppContent: React.FC = () => {
 
   const featuredGames = useMemo(() => games.filter(g => g.featured), [games]);
   
-  const allGamesSorted = useMemo(() => [...games].sort((a, b) => a.title[language].localeCompare(b.title[language])), [games, language]);
+  const allGamesSorted = useMemo(() => [...games].sort((a, b) => a.title?.[language]?.localeCompare(b.title?.[language] || '') || 0), [games, language]);
   
-  const savaşOyunları = useMemo(() => games.filter(g => g.category.en === 'War Games'), [games]);
-  const ikiDOyunlar = useMemo(() => games.filter(g => g.category.en === '2D Games'), [games]);
-  const arabaOyunları = useMemo(() => games.filter(g => g.category.en === 'Car Racing'), [games]);
-  const simulasyonOyunları = useMemo(() => games.filter(g => g.category.en === 'Simulation'), [games]);
+  const savaşOyunları = useMemo(() => games.filter(g => g.category?.en === 'War Games'), [games]);
+  const ikiDOyunlar = useMemo(() => games.filter(g => g.category?.en === '2D Games'), [games]);
+  const arabaOyunları = useMemo(() => games.filter(g => g.category?.en === 'Car Racing'), [games]);
+  const simulasyonOyunları = useMemo(() => games.filter(g => g.category?.en === 'Simulation'), [games]);
 
   const filteredGames = useMemo(() => {
     if (!searchQuery) return [];
     
     const lowercasedQuery = searchQuery.toLowerCase();
     return games.filter(game =>
-      game.title[language].toLowerCase().includes(lowercasedQuery) ||
-      game.genre[language].toLowerCase().includes(lowercasedQuery) ||
-      game.category[language].toLowerCase().includes(lowercasedQuery)
+      game.title?.[language]?.toLowerCase().includes(lowercasedQuery) ||
+      game.genre?.[language]?.toLowerCase().includes(lowercasedQuery) ||
+      game.category?.[language]?.toLowerCase().includes(lowercasedQuery)
     );
   }, [searchQuery, games, language]);
 
@@ -579,6 +655,7 @@ const AppContent: React.FC = () => {
           onSignupClick={() => setIsSignupModalOpen(true)}
           onLogout={handleUserLogout}
         />
+        {currentUser && !currentUser.isVerified && <EmailVerificationBanner user={currentUser} onResend={handleSendVerification} />}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ paddingTop: `${headerHeight}px` }}>
         <div key={view.page + (view.id || '')} className="page-transition py-12">
           {renderMainContent()}
@@ -592,6 +669,10 @@ const AppContent: React.FC = () => {
             setIsLoginModalOpen(false);
             setIsSignupModalOpen(true);
         }}
+        onForgotPassword={() => {
+            setIsLoginModalOpen(false);
+            setIsForgotPasswordModalOpen(true);
+        }}
       />
        <SignupModal 
         isOpen={isSignupModalOpen}
@@ -601,6 +682,24 @@ const AppContent: React.FC = () => {
             setIsSignupModalOpen(false);
             setIsLoginModalOpen(true);
         }}
+      />
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordModalOpen}
+        onClose={() => setIsForgotPasswordModalOpen(false)}
+        onRequestReset={handleRequestPasswordReset}
+        onSwitchToLogin={() => {
+            setIsForgotPasswordModalOpen(false);
+            setIsLoginModalOpen(true);
+        }}
+      />
+      <ResetPasswordModal
+        isOpen={isResetPasswordModalOpen}
+        onClose={() => {
+            setIsResetPasswordModalOpen(false);
+            setUserToResetPassword(null);
+        }}
+        onReset={handlePasswordReset}
+        userToReset={userToResetPassword}
       />
       <TopicModal
           isOpen={isTopicModalOpen}
@@ -620,7 +719,7 @@ const AppContent: React.FC = () => {
                 }
               }
           }}
-          initialData={topicToEdit ? { title: topicToEdit.title[language], content: topicToEdit.content[language] } : undefined}
+          initialData={topicToEdit ? { title: topicToEdit.title?.[language] || '', content: topicToEdit.content?.[language] || '' } : undefined}
       />
       <Footer siteName={settings.siteName[language]} contactEmail={settings.contactEmail} />
       <BackToTopButton />

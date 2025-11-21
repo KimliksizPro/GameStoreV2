@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Game } from '../types';
 
@@ -13,6 +12,9 @@ interface GameManagementProps {
 const emptyGame: Omit<Game, 'id'> = {
   title: { en: '', tr: '' },
   genre: { en: '', tr: '' },
+  // FIX: Added missing developer and publisher properties to align with the Game type.
+  developer: { en: '', tr: '' },
+  publisher: { en: '', tr: '' },
   category: { en: '', tr: '' },
   platform: '',
   verticalImageUrl: '',
@@ -74,7 +76,8 @@ const GameFormModal: React.FC<{
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         
-        const localizedFields = ['title', 'genre', 'category', 'description'];
+        // FIX: Added developer and publisher to handle LocalizedString updates.
+        const localizedFields = ['title', 'genre', 'category', 'description', 'developer', 'publisher'];
 
         if (type === 'checkbox' && 'checked' in e.target) {
             const { checked } = e.target as HTMLInputElement;
@@ -111,6 +114,9 @@ const GameFormModal: React.FC<{
                         {/* FIX: Use .en property for LocalizedString value. */}
                         <FormInput label="Genre (e.g., Action/RPG)" type="text" name="genre" id="genre" value={formData.genre.en} onChange={handleChange} required />
                         <FormInput label="Platform (e.g., PC, PS5)" type="text" name="platform" id="platform" value={formData.platform || ''} onChange={handleChange} required />
+                        {/* FIX: Added inputs for developer and publisher. */}
+                        <FormInput label="Developer" type="text" name="developer" id="developer" value={formData.developer.en} onChange={handleChange} required />
+                        <FormInput label="Publisher" type="text" name="publisher" id="publisher" value={formData.publisher.en} onChange={handleChange} required />
                         {/* FIX: Use .en property for LocalizedString value. */}
                         <FormInput label="Category" type="text" name="category" id="category" value={formData.category.en} onChange={handleChange} required />
                         <FormInput label="Price" type="number" name="price" id="price" value={formData.price} onChange={handleChange} required step="0.01" min="0" />

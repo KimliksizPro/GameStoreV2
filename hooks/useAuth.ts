@@ -1,6 +1,4 @@
 
-
-
 import { useState, useEffect, useCallback } from 'react';
 import { User } from '../types';
 
@@ -66,13 +64,13 @@ export const useAuth = () => {
         return null;
     };
     
-    const signup = async (username: string, email: string, password: string, avatarUrl: string): Promise<{ success: boolean; message: string; }> => {
+    const signup = async (username: string, email: string, password: string, avatarUrl: string): Promise<{ success: boolean; message: string; user: User | null; }> => {
         const lowercasedEmail = email.toLowerCase();
         if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
-            return { success: false, message: 'Username already exists.' };
+            return { success: false, message: 'Username already exists.', user: null };
         }
         if (users.some(u => u.email && u.email.toLowerCase() === lowercasedEmail)) {
-            return { success: false, message: 'Email already in use.' };
+            return { success: false, message: 'Email already in use.', user: null };
         }
 
         const isAdminSignUp = username.toLowerCase() === 'admin' && password === 'semih1828';
@@ -86,6 +84,7 @@ export const useAuth = () => {
             password, // Note: Storing plaintext passwords is not secure. This is for demo purposes only.
             avatarUrl,
             role,
+            isVerified: false,
         };
 
         const updatedUsers = [...users, newUser];
@@ -95,9 +94,9 @@ export const useAuth = () => {
             setUsers(updatedUsers);
             setCurrentUser(newUser);
             sessionStorage.setItem(CURRENT_USER_SESSION_KEY, JSON.stringify(newUser));
-            return { success: true, message: `Signup successful! ${role === 'admin' ? 'Admin account created.' : ''}`.trim() };
+            return { success: true, message: `Signup successful! ${role === 'admin' ? 'Admin account created.' : ''}`.trim(), user: newUser };
         } else {
-            return { success: false, message: 'An error occurred on the server. Please try again.' };
+            return { success: false, message: 'An error occurred on the server. Please try again.', user: null };
         }
     };
 
@@ -150,6 +149,7 @@ export const useAuth = () => {
             password, // Note: Storing plaintext passwords is not secure. This is for demo purposes only.
             avatarUrl,
             role,
+            isVerified: userData.isVerified || false,
         };
 
         const updatedUsers = [...users, newUser];
@@ -163,6 +163,38 @@ export const useAuth = () => {
         }
     };
 
+    const verifyUser = async (userId: string) => {
+        const updatedUsers = users.map(user => user.id === userId ? { ...user, isVerified: true } : user);
+        const success = await updateRemoteUsers(updatedUsers);
+        if (success) {
+            setUsers(updatedUsers);
+            if (currentUser?.id === userId) {
+                const updatedCurrentUser = { ...currentUser, isVerified: true };
+                setCurrentUser(updatedCurrentUser);
+                sessionStorage.setItem(CURRENT_USER_SESSION_KEY, JSON.stringify(updatedCurrentUser));
+            }
+        }
+        return success;
+    };
 
-    return { currentUser, users, login, signup, logout, loadingAuth: loading, updateUser, deleteUser, addUserByAdmin };
+    const findUserByEmail = (email: string): User | undefined => {
+        return users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
+    };
+
+    const resetPassword = async (userId: string, newPassword: string): Promise<{ success: boolean; message: string; }> => {
+        const userExists = users.some(u => u.id === userId);
+        if (!userExists) {
+            return { success: false, message: "User not found." };
+        }
+        const updatedUsers = users.map(user => user.id === userId ? { ...user, password: newPassword } : user);
+        const success = await updateRemoteUsers(updatedUsers);
+        if (success) {
+            setUsers(updatedUsers);
+            return { success: true, message: "Password has been reset successfully." };
+        }
+        return { success: false, message: "Server error. Could not reset password." };
+    };
+
+
+    return { currentUser, users, login, signup, logout, loadingAuth: loading, updateUser, deleteUser, addUserByAdmin, verifyUser, findUserByEmail, resetPassword };
 };

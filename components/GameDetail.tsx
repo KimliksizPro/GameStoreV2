@@ -1,5 +1,6 @@
 
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Game, User } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -10,18 +11,13 @@ interface GameDetailProps {
   onRequestLogin: () => void;
 }
 
-const InfoPill: React.FC<{label: string, value: string}> = ({ label, value }) => (
-    <div className="text-sm">
-        <span className="font-semibold text-brand-gray mr-2">{label}:</span>
-        <span className="font-medium text-white">{value}</span>
-    </div>
-);
+type Tab = 'description' | 'requirements' | 'reviews';
 
-const DownloadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>;
-const PatchIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17.778 8.222c-4.444 0-8 3.556-8 8 0 .296.022.586.06.874a8 8 0 01-8.712-9.352A8.003 8.003 0 018.222 2.222c4.444 0 8 3.556 8 8 0 .296-.022.586-.06.874.288-.038.578-.06.874-.06.296 0 .586.022.874.06a8 8 0 00-1.492-4.434zM10.222 18.282a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" /></svg>
+const DownloadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>;
 
 const GameDetail: React.FC<GameDetailProps> = ({ game, onBack, currentUser, onRequestLogin }) => {
   const { t, language } = useTranslation();
+  const [activeTab, setActiveTab] = useState<Tab>('description');
   
   const handleDownloadClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!currentUser) {
@@ -30,87 +26,155 @@ const GameDetail: React.FC<GameDetailProps> = ({ game, onBack, currentUser, onRe
     }
   };
 
-  return (
-    <section className="py-12 animate-fadeIn">
-       <div className="max-w-6xl mx-auto px-4">
-            <button 
-                onClick={onBack}
-                className="mb-8 inline-flex items-center gap-2 text-brand-gray hover:text-white transition-colors"
-                aria-label="Back to store"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                {t('gameDetail.backToStore')}
-            </button>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-12">
-                <aside className="md:col-span-2">
-                    <div className="md:sticky md:top-28">
-                        <img 
-                            src={game.verticalImageUrl} 
-                            alt={game.title[language]}
-                            className="w-full h-auto object-cover aspect-[3/4] rounded-2xl shadow-2xl shadow-brand-purple/20"
-                        />
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'requirements':
+        return (
+           <section id="requirements" className="space-y-4 text-[#d1c8e7]">
+             <h3 className="text-2xl font-bold text-white">{t('gameDetail.requirementsTitle')}</h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h4 className="font-bold text-lg text-brand-light-purple mb-2">{t('gameDetail.minimum')}</h4>
+                    <pre className="text-sm whitespace-pre-wrap font-sans">{game.systemRequirements?.minimum?.[language]}</pre>
+                </div>
+                <div>
+                    <h4 className="font-bold text-lg text-brand-light-purple mb-2">{t('gameDetail.recommended')}</h4>
+                    <pre className="text-sm whitespace-pre-wrap font-sans">{game.systemRequirements?.recommended?.[language]}</pre>
+                </div>
+             </div>
+           </section>
+        );
+      case 'reviews':
+        return (
+          <section id="reviews" className="space-y-4 text-[#d1c8e7]">
+            <h3 className="text-2xl font-bold text-white">{t('gameDetail.userReviews')}</h3>
+            <p>User reviews are coming soon!</p>
+          </section>
+        )
+      case 'description':
+      default:
+        return (
+          <>
+            <section className="space-y-4 text-[#d1c8e7]" id="description">
+                <h3 className="text-2xl font-bold text-white">{t('gameDetail.about')}</h3>
+                <p>{game.description?.[language]}</p>
+            </section>
+             {game.screenshots && game.screenshots.length > 0 && (
+                <section className="space-y-4" id="media">
+                    <h3 className="text-2xl font-bold text-white">{t('gameDetail.screenshots')}</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                       {game.screenshots.map((src, index) => (
+                           <a key={index} href={src} target="_blank" rel="noopener noreferrer" className="aspect-video bg-cover bg-center rounded-lg transition-transform duration-300 hover:scale-105" style={{backgroundImage: `url("${src}")`}} title={`${game.title?.[language]} screenshot ${index + 1}`}></a>
+                       ))}
                     </div>
-                </aside>
-                <main className="md:col-span-3">
-                    <h1 className="text-4xl md:text-5xl font-extrabold mb-3 leading-tight tracking-tighter">{game.title[language]}</h1>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-gray-800 pb-4 mb-6">
-                        <InfoPill label={t('gameDetail.genre')} value={game.genre[language]} />
-                        <InfoPill label={t('gameDetail.category')} value={game.category[language]} />
-                        <InfoPill label={t('gameDetail.release')} value={new Date(game.releaseDate).toLocaleDateString()} />
-                    </div>
+                </section>
+            )}
+          </>
+        );
+    }
+  }
+  
+  const TabButton: React.FC<{tab: Tab, label: string}> = ({ tab, label }) => (
+       <button onClick={() => setActiveTab(tab)} className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 transition-colors ${activeTab === tab ? 'border-b-brand-purple text-white' : 'border-b-transparent text-brand-gray hover:text-white'}`}>
+          <p className="text-sm font-bold leading-normal tracking-[0.015em]">{label}</p>
+      </button>
+  );
 
-                    <div className="bg-brand-dark p-4 sm:p-6 rounded-lg border border-gray-800 my-8">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <p className="text-3xl font-bold" aria-label={t('gameDetail.price', {price: game.price.toFixed(2)})}>${game.price.toFixed(2)}</p>
-                            <div className="flex items-center gap-3">
-                                {game.patchUrl && (
-                                     <a href={game.patchUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center whitespace-nowrap bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 ease-in-out">
-                                        <PatchIcon /> <span>{t('gameDetail.patch')}</span>
-                                    </a>
-                                )}
-                                <a 
-                                    href={currentUser ? game.downloadUrl : '#'}
-                                    onClick={handleDownloadClick}
-                                    target={currentUser ? "_blank" : "_self"}
-                                    rel="noopener noreferrer"
-                                    title={currentUser ? t('gameDetail.download') : t('hero.loginToDownload')}
-                                    className="flex items-center justify-center whitespace-nowrap bg-brand-purple hover:bg-violet-500 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 hover:drop-shadow-[0_4px_18px_rgba(109,40,217,0.5)]"
-                                >
-                                    <DownloadIcon /> <span>{t('gameDetail.download')}</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <h2 className="text-2xl font-bold mb-4 border-l-4 border-brand-purple pl-3">{t('gameDetail.about')}</h2>
-                        <div className="prose prose-invert prose-p:text-brand-gray text-lg max-w-none">
-                            <p>{game.description[language]}</p>
-                        </div>
-                    </div>
-                    
-                    {game.screenshots && game.screenshots.length > 0 && (
-                        <div className="mt-12">
-                            <h2 className="text-2xl font-bold mb-4 border-l-4 border-brand-purple pl-3">{t('gameDetail.screenshots')}</h2>
-                            <div className="grid grid-cols-2 gap-4 mt-4">
-                                {game.screenshots.map((src, index) => (
-                                    <a key={index} href={src} target="_blank" rel="noopener noreferrer">
-                                        <img 
-                                            src={src} 
-                                            alt={`${game.title[language]} screenshot ${index + 1}`}
-                                            className="rounded-lg shadow-lg object-cover w-full h-full aspect-video transition-transform duration-300 hover:scale-105"
-                                        />
-                                    </a>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </main>
+  return (
+    <div className="animate-fadeIn">
+      {/* Back Button */}
+       <button 
+          onClick={onBack}
+          className="mb-6 inline-flex items-center gap-2 text-brand-gray hover:text-white transition-colors"
+          aria-label={t('gameDetail.backToStore')}
+      >
+          <span className="material-symbols-outlined">arrow_back</span>
+          {t('gameDetail.backToStore')}
+      </button>
+      
+      {/* Hero Section */}
+      <section className="mb-10">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-wrap justify-between gap-3">
+            <div className="flex min-w-72 flex-col gap-3">
+              <p className="text-white text-4xl md:text-5xl font-black leading-tight tracking-[-0.033em]">{game.title?.[language]}</p>
+              <p className="text-brand-gray text-base font-normal leading-normal">{game.genre?.[language]}</p>
             </div>
-       </div>
-    </section>
+          </div>
+          <div 
+            className="relative flex items-center justify-center bg-cover bg-center aspect-video rounded-xl overflow-hidden" 
+            style={{backgroundImage: `url("${game.horizontalImageUrl}")`}}
+          >
+            <a href={game.trailerUrl || '#'} target="_blank" rel="noopener noreferrer" className="flex shrink-0 items-center justify-center rounded-full size-16 bg-black/40 text-white backdrop-blur-sm transition-transform hover:scale-110" aria-label="Play trailer">
+              <span className="material-symbols-outlined text-4xl">play_arrow</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-10">
+        {/* Left Column */}
+        <div className="lg:col-span-2">
+          {/* Tabs */}
+          <div className="pb-3 sticky top-[65px] bg-brand-dark/80 backdrop-blur-sm z-10">
+            <div className="flex border-b border-[#443267] gap-8">
+                <TabButton tab="description" label={t('gameDetail.descriptionTab')} />
+                {game.systemRequirements && <TabButton tab="requirements" label={t('gameDetail.requirementsTab')} />}
+                <TabButton tab="reviews" label={t('gameDetail.reviewsTab')} />
+            </div>
+          </div>
+          {/* Tab Content */}
+          <div className="py-8 space-y-10">
+            {renderTabContent()}
+          </div>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-[130px] space-y-6">
+            <div className="bg-[#211833] p-6 rounded-xl space-y-5 border border-gray-800">
+              <div className="flex items-center gap-4">
+                <div className="w-24 h-32 bg-cover bg-center rounded-md flex-shrink-0" style={{backgroundImage: `url("${game.verticalImageUrl}")`}}></div>
+                <div className="flex flex-col">
+                  <p className="text-white font-bold text-xl">{game.title?.[language]}</p>
+                  <p className="text-sm text-brand-gray">{game.developer?.[language]}</p>
+                </div>
+              </div>
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-brand-purple rounded-lg blur-md opacity-0 group-hover:opacity-75 transition duration-300 ease-in-out"></div>
+                <a 
+                  href={currentUser ? game.downloadUrl : '#'}
+                  onClick={handleDownloadClick}
+                  target={currentUser ? "_blank" : "_self"}
+                  rel="noopener noreferrer"
+                  title={currentUser ? t('hero.download') : t('hero.loginToDownload')}
+                  className="relative flex items-center justify-center h-12 px-5 bg-brand-purple hover:bg-violet-500 text-white text-base font-bold leading-normal tracking-[0.015em] rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 border-2 border-brand-light-purple/50 hover:border-brand-light-purple"
+                >
+                  <DownloadIcon />
+                  <span className="truncate">{t('hero.download')}</span>
+                </a>
+              </div>
+              <div className="border-t border-[#443267] pt-4 space-y-3 text-sm">
+                <div className="flex justify-between"><span className="text-brand-gray">{t('gameDetail.genre')}:</span> <span className="text-white font-medium">{game.genre?.[language]}</span></div>
+                <div className="flex justify-between"><span className="text-brand-gray">{t('gameDetail.developer')}:</span> <span className="text-white font-medium">{game.developer?.[language]}</span></div>
+                <div className="flex justify-between"><span className="text-brand-gray">{t('gameDetail.publisher')}:</span> <span className="text-white font-medium">{game.publisher?.[language]}</span></div>
+                <div className="flex justify-between"><span className="text-brand-gray">{t('gameDetail.releaseDate')}:</span> <span className="text-white font-medium">{new Date(game.releaseDate).toLocaleDateString()}</span></div>
+                {game.platform && <div className="flex justify-between items-center"><span className="text-brand-gray">{t('gameDetail.platforms')}:</span> <span className="text-white font-medium">{game.platform}</span></div>}
+              </div>
+            </div>
+            
+            <div className="bg-[#211833] p-6 rounded-xl space-y-4 border border-gray-800">
+                <h3 className="text-xl font-bold text-white">{t('gameDetail.userReviews')}</h3>
+                <div>
+                    <p className="text-lg font-bold text-green-400">{t('gameDetail.reviewStatus')}</p>
+                    <p className="text-sm text-brand-gray">{t('gameDetail.reviewSummary')}</p>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
