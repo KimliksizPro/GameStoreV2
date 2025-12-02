@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo } from 'react';
 import { User } from '../types';
 import UserEditModal from './UserEditModal';
@@ -50,7 +49,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onA
             alert("You cannot delete your own account.");
             return;
         }
-        if (window.confirm(`Are you sure you want to delete user "${user.username}"? This action is permanent.`)) {
+        if (window.confirm(`Are you sure you want to delete user "${user.username}"?`)) {
             onDeleteUser(user.id);
         }
     };
@@ -70,71 +69,88 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onA
     };
 
   return (
-    <>
-        <header className="flex flex-wrap justify-between items-center gap-4 mb-6">
-            <h1 className="text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">User Management</h1>
-            <div className="flex items-center gap-4">
-                <span className="text-brand-gray text-sm">{users.length} total users</span>
-                <button onClick={handleAddNewUserClick} className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-violet-600 transition-colors">
-                    <span className="material-symbols-outlined mr-2 text-base">person_add</span>
-                    <span className="truncate">Add New User</span>
-                </button>
+    <div className="space-y-6">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 className="text-3xl font-black text-white tracking-tight">Users</h1>
+                <p className="text-brand-gray mt-1">Manage user accounts and permissions.</p>
             </div>
+            <button onClick={handleAddNewUserClick} className="bg-brand-purple hover:bg-violet-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-brand-purple/25 flex items-center gap-2 border border-white/10 hover:-translate-y-0.5">
+                <span className="material-symbols-outlined">person_add</span>
+                <span>Add User</span>
+            </button>
         </header>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-[#1C162D] rounded-xl border border-gray-800">
-            <div className="flex-1">
-                <label className="relative flex items-center h-12 w-full">
-                    <div className="text-[#a492c9] absolute left-0 flex items-center justify-center pl-4">
-                        <span className="material-symbols-outlined">search</span>
-                    </div>
-                    <input className="form-input w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-700 bg-[#2f2348] focus:border-primary/50 h-full placeholder:text-[#a492c9] pl-12 pr-4" placeholder="Search users..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                </label>
+         <div className="bg-[#1a102e]/60 backdrop-blur-xl rounded-3xl border border-white/5 p-2 flex flex-col md:flex-row gap-2">
+            <div className="relative flex-1">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                <input 
+                    className="w-full bg-[#0f0720]/50 rounded-xl py-3 pl-12 pr-4 border border-transparent focus:border-brand-purple focus:ring-0 text-white placeholder:text-gray-600 transition-all" 
+                    placeholder="Search users by name or email..." 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                />
             </div>
         </div>
 
         {/* Desktop Table */}
-        <div className="overflow-x-auto bg-[#1C162D] rounded-xl border border-gray-800 hidden md:block">
-            <table className="w-full text-sm text-left text-gray-400">
-                <thead className="text-xs text-gray-400 uppercase bg-[#2f2348]">
-                    <tr>
-                        <th scope="col" className="px-6 py-3 font-semibold">User</th>
-                        <th scope="col" className="px-6 py-3 font-semibold">Email</th>
-                        <th scope="col" className="px-6 py-3 font-semibold">Role</th>
-                        <th scope="col" className="px-6 py-3 font-semibold">Status</th>
-                        <th scope="col" className="px-6 py-3 font-semibold text-right">Actions</th>
+        <div className="hidden md:block overflow-hidden bg-[#1a102e]/60 backdrop-blur-xl rounded-3xl border border-white/5 shadow-2xl">
+            <table className="w-full text-left border-collapse">
+                <thead>
+                    <tr className="bg-white/5 border-b border-white/5 text-gray-400 text-xs uppercase tracking-wider">
+                        <th className="px-6 py-4 font-bold">User</th>
+                        <th className="px-6 py-4 font-bold">Email</th>
+                        <th className="px-6 py-4 font-bold">Role</th>
+                        <th className="px-6 py-4 font-bold">Status</th>
+                        <th className="px-6 py-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-white/5">
                     {filteredUsers.map(user => (
-                        <tr key={user.id} className="border-b border-gray-800 hover:bg-primary/10">
-                            <th scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap flex items-center gap-4">
-                                <img src={user.avatarUrl} alt={user.username} className="w-10 h-10 object-cover rounded-full"/>
-                                <span>{user.username}</span>
-                            </th>
-                            <td className="px-6 py-4">{user.email}</td>
+                        <tr key={user.id} className="hover:bg-white/5 transition-colors group">
                             <td className="px-6 py-4">
-                                <span className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${user.role === 'admin' ? 'bg-primary/20 text-brand-light-purple' : 'bg-gray-700/50 text-gray-300'}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className="relative">
+                                         <img src={user.avatarUrl} alt={user.username} className="w-10 h-10 object-cover rounded-xl border border-white/10"/>
+                                         {user.role === 'admin' && <span className="absolute -top-1 -right-1 w-3 h-3 bg-brand-purple rounded-full border border-[#1a102e]"></span>}
+                                    </div>
+                                    <span className="font-bold text-white">{user.username}</span>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-400 font-mono">{user.email}</td>
+                            <td className="px-6 py-4">
+                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full uppercase border ${
+                                    user.role === 'admin' 
+                                    ? 'bg-brand-purple/10 text-brand-light-purple border-brand-purple/20' 
+                                    : 'bg-gray-700/30 text-gray-400 border-gray-600/30'
+                                }`}>
                                     {user.role}
                                 </span>
                             </td>
                             <td className="px-6 py-4">
                                {user.isVerified ? (
-                                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300">Verified</span>
+                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-green-400">
+                                        <span className="material-symbols-outlined text-sm">check_circle</span> Verified
+                                    </span>
                                 ) : (
-                                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-500/20 text-yellow-300">Unverified</span>
+                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-yellow-500">
+                                        <span className="material-symbols-outlined text-sm">pending</span> Pending
+                                    </span>
                                 )}
                             </td>
                             <td className="px-6 py-4 text-right">
-                                <button onClick={() => handleEditClick(user)} className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-primary/30"><span className="material-symbols-outlined text-base">edit</span></button>
-                                <button 
-                                  onClick={() => handleDelete(user)} 
-                                  className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-400"
-                                  disabled={user.id === currentUser?.id}
-                                  title={user.id === currentUser?.id ? "Cannot delete self" : "Delete user"}
-                                >
-                                    <span className="material-symbols-outlined text-base">delete</span>
-                                </button>
+                                <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => handleEditClick(user)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-brand-purple hover:text-white text-gray-400 transition-all" title="Edit">
+                                        <span className="material-symbols-outlined text-lg">edit</span>
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDelete(user)} 
+                                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-red-500 hover:text-white text-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                      disabled={user.id === currentUser?.id}
+                                    >
+                                        <span className="material-symbols-outlined text-lg">delete</span>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     ))}
@@ -143,42 +159,41 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onA
         </div>
 
         {/* Mobile Card List */}
-        <div className="space-y-4 md:hidden">
+        <div className="grid grid-cols-1 gap-4 md:hidden">
             {filteredUsers.length > 0 ? filteredUsers.map(user => (
-                <div key={user.id} className="bg-[#1C162D] rounded-xl border border-gray-800 p-4 space-y-3">
+                <div key={user.id} className="bg-[#1a102e]/60 backdrop-blur-xl rounded-2xl border border-white/5 p-4 space-y-3">
                     <div className="flex items-center gap-4">
-                        <img src={user.avatarUrl} alt={user.username} className="w-12 h-12 object-cover rounded-full flex-shrink-0"/>
-                        <div className="flex-1">
+                        <img src={user.avatarUrl} alt={user.username} className="w-12 h-12 object-cover rounded-xl border border-white/5 flex-shrink-0"/>
+                        <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start">
-                                <h3 className="font-bold text-white">{user.username}</h3>
-                                 {user.isVerified ? (
-                                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300">Verified</span>
-                                ) : (
-                                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-500/20 text-yellow-300">Unverified</span>
-                                )}
+                                <h3 className="font-bold text-white truncate pr-2">{user.username}</h3>
+                                {user.role === 'admin' && <span className="text-[10px] font-bold uppercase bg-brand-purple/20 text-brand-light-purple px-1.5 py-0.5 rounded border border-brand-purple/20">Admin</span>}
                             </div>
-                             <p className="text-sm text-gray-400 truncate">{user.email}</p>
-                             <span className={`inline-block mt-1 px-2 py-1 text-xs font-semibold rounded-full capitalize ${user.role === 'admin' ? 'bg-primary/20 text-brand-light-purple' : 'bg-gray-700/50 text-gray-300'}`}>
-                                {user.role}
-                            </span>
+                             <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                             <div className="mt-1">
+                                {user.isVerified ? (
+                                    <span className="text-[10px] font-bold text-green-400">Verified Account</span>
+                                ) : (
+                                    <span className="text-[10px] font-bold text-yellow-500">Unverified</span>
+                                )}
+                             </div>
                         </div>
                     </div>
-                    <div className="flex justify-end items-center gap-2 pt-3 border-t border-gray-700/50">
-                       <button onClick={() => handleEditClick(user)} className="text-gray-300 hover:text-white text-sm flex items-center gap-1 py-1 px-2 rounded-md hover:bg-primary/30">
-                            <span className="material-symbols-outlined text-base">edit</span> Edit
+                    <div className="flex justify-end items-center gap-2 pt-3 border-t border-white/5">
+                       <button onClick={() => handleEditClick(user)} className="px-3 py-1.5 bg-white/5 hover:bg-brand-purple text-gray-300 hover:text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1">
+                            <span className="material-symbols-outlined text-sm">edit</span> Edit
                         </button>
                         <button 
                             onClick={() => handleDelete(user)}
-                            className="text-gray-300 hover:text-red-400 text-sm flex items-center gap-1 py-1 px-2 rounded-md hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-3 py-1.5 bg-white/5 hover:bg-red-500 text-gray-300 hover:text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1 disabled:opacity-50"
                             disabled={user.id === currentUser?.id}
-                            title={user.id === currentUser?.id ? "Cannot delete self" : "Delete user"}
                         >
-                            <span className="material-symbols-outlined text-base">delete</span> Delete
+                            <span className="material-symbols-outlined text-sm">delete</span> Delete
                         </button>
                     </div>
                 </div>
             )) : (
-                 <p className="text-center text-gray-500 py-8">No users found for "{searchQuery}".</p>
+                 <p className="text-center text-gray-500 py-8">No users found.</p>
             )}
         </div>
         
@@ -191,7 +206,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onA
                 currentUser={currentUser}
             />
         )}
-    </>
+    </div>
   );
 };
 

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Game, User } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
@@ -10,8 +8,6 @@ interface HeroProps {
   currentUser: User | null;
   onRequestLogin: () => void;
 }
-
-const DownloadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>;
 
 const Hero: React.FC<HeroProps> = ({ games, onViewGame, currentUser, onRequestLogin }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -27,15 +23,15 @@ const Hero: React.FC<HeroProps> = ({ games, onViewGame, currentUser, onRequestLo
   
   useEffect(() => {
       if (games.length > 1) {
-          const slideInterval = setInterval(nextSlide, 7000); // Change slide every 7 seconds
+          const slideInterval = setInterval(nextSlide, 8000); 
           return () => clearInterval(slideInterval);
       }
   }, [games.length, nextSlide]);
 
   if (games.length === 0) {
     return (
-        <section className="mt-12">
-            <div className="relative rounded-2xl overflow-hidden h-[400px] md:h-[500px] flex items-center justify-center p-8 md:p-16 bg-brand-dark">
+        <section className="mt-32 container mx-auto px-4">
+            <div className="rounded-3xl h-[400px] flex items-center justify-center bg-white/5 border border-white/10 backdrop-blur-sm">
                 <p className="text-brand-gray">{t('hero.noFeatured')}</p>
             </div>
         </section>
@@ -53,64 +49,96 @@ const Hero: React.FC<HeroProps> = ({ games, onViewGame, currentUser, onRequestLo
   };
 
   return (
-    <section className="mt-12 relative">
-      <div 
-        className="relative rounded-2xl h-[400px] md:h-[500px] flex items-center p-8 md:p-16 transition-all duration-1000 ease-in-out"
-      >
-        <div 
-            className="absolute inset-0 bg-cover bg-center rounded-2xl"
-            style={{ backgroundImage: `url('${game.horizontalImageUrl}')` }}
-        ></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent rounded-2xl"></div>
-        <div 
-            className="absolute inset-0 bg-brand-purple opacity-0 mix-blend-overlay animate-pulse rounded-2xl" 
-            style={{ animationDuration: '4s', animationDelay: `${currentIndex * 100}ms`}}
-        ></div>
-        
-        <div key={game.id} className="relative z-10 max-w-xl text-white animate-fadeIn">
-          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 leading-tight">
-            {game?.title?.[language]}
-          </h1>
-          <p className="text-lg md:text-xl text-gray-300 mb-8">
-            {description.length > 150 ? `${description.substring(0, 150)}...` : description}
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-brand-purple rounded-lg blur-md opacity-0 group-hover:opacity-75 transition duration-300 ease-in-out"></div>
-              <a 
-                href={currentUser ? game.downloadUrl : '#'}
-                onClick={handleDownloadClick}
-                target={currentUser ? "_blank" : "_self"}
-                rel="noopener noreferrer"
-                title={currentUser ? t('hero.download') : t('hero.loginToDownload')}
-                className="relative flex items-center justify-center whitespace-nowrap bg-brand-purple hover:bg-violet-500 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105"
+    <section className="mt-28 container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative w-full h-[500px] rounded-3xl overflow-hidden shadow-2xl border border-white/10 group">
+          {/* Background Images */}
+          {games.map((g, index) => (
+              <div 
+                key={g.id}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100 z-0' : 'opacity-0 -z-10'}`}
               >
-                <DownloadIcon />
-                <span>{t('hero.download')}</span>
-              </a>
-            </div>
-            <button onClick={() => onViewGame(game.id)} className="bg-gray-900/50 backdrop-blur-sm border border-white/20 hover:bg-gray-900/75 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out">
-              {t('hero.viewGame')}
-            </button>
-          </div>
-        </div>
-      </div>
+                 <div 
+                    className="absolute inset-0 bg-cover bg-center transform transition-transform duration-[20s] ease-linear scale-105"
+                    style={{ 
+                        backgroundImage: `url('${g.horizontalImageUrl}')`,
+                        transform: index === currentIndex ? 'scale(1.1)' : 'scale(1.0)'
+                    }}
+                ></div>
+                {/* Modern Gradient Overlays */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0f0720] via-[#0f0720]/40 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0f0720]/90 via-[#0f0720]/30 to-transparent"></div>
+              </div>
+          ))}
 
-      {games.length > 1 && (
-        <>
-            <button onClick={prevSlide} className="absolute top-1/2 left-4 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 rounded-full p-2 text-white transition-colors" aria-label={t('hero.prevGame')}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <button onClick={nextSlide} className="absolute top-1/2 right-4 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 rounded-full p-2 text-white transition-colors" aria-label={t('hero.nextGame')}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-            </button>
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+          <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12 z-10">
+            <div className="max-w-3xl animate-fadeInUp">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-brand-purple text-white rounded-full shadow-[0_0_15px_rgba(124,58,237,0.5)]">
+                    Featured
+                </span>
+                <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-white/10 text-white rounded-full backdrop-blur-md border border-white/10">
+                    {game.category?.[language]}
+                </span>
+              </div>
+
+              <h1 className="text-4xl md:text-6xl font-black mb-4 leading-tight tracking-tight text-white drop-shadow-lg">
+                {game?.title?.[language]}
+              </h1>
+              
+              <p className="text-base md:text-lg text-gray-300 mb-8 leading-relaxed max-w-xl line-clamp-2 md:line-clamp-3">
+                {description}
+              </p>
+              
+              <div className="flex flex-wrap gap-4">
+                <div className="relative group/btn">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-purple to-fuchsia-600 rounded-xl blur opacity-60 group-hover/btn:opacity-100 transition duration-300"></div>
+                  <a 
+                    href={currentUser ? game.downloadUrl : '#'}
+                    onClick={handleDownloadClick}
+                    target={currentUser ? "_blank" : "_self"}
+                    rel="noopener noreferrer"
+                    className="relative flex items-center justify-center gap-2 bg-[#120b1f] hover:bg-[#1a102e] text-white font-bold py-3.5 px-8 rounded-xl transition-all duration-300"
+                  >
+                    <span className="material-symbols-outlined text-[22px]">download</span>
+                    <span>{t('hero.download')}</span>
+                  </a>
+                </div>
+                
+                <button 
+                    onClick={() => onViewGame(game.id)} 
+                    className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-bold py-3.5 px-8 rounded-xl transition-all duration-300 border border-white/10 hover:border-white/30"
+                >
+                  <span className="material-symbols-outlined text-[22px]">visibility</span>
+                  {t('hero.viewGame')}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Controls */}
+          <div className="absolute bottom-8 right-8 z-20 flex items-center gap-3 hidden md:flex">
+             {/* Slide Indicators */}
+             <div className="flex gap-2 mr-4 bg-black/20 backdrop-blur-md p-2 rounded-full border border-white/5">
                 {games.map((_, index) => (
-                    <button key={index} onClick={() => setCurrentIndex(index)} className={`w-3 h-3 rounded-full ${currentIndex === index ? 'bg-white' : 'bg-white/50'} transition-colors`} aria-label={t('hero.goToSlide', { slide: (index + 1).toString() })}></button>
+                    <button 
+                        key={index} 
+                        onClick={() => setCurrentIndex(index)} 
+                        className={`h-2 rounded-full transition-all duration-500 ${currentIndex === index ? 'w-8 bg-brand-purple' : 'w-2 bg-white/30 hover:bg-white/60'}`}
+                        aria-label={t('hero.goToSlide', { slide: (index + 1).toString() })}
+                    />
                 ))}
             </div>
-        </>
-      )}
+            {/* Arrows */}
+            <div className="flex gap-2">
+                <button onClick={prevSlide} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/30 hover:bg-brand-purple backdrop-blur-md border border-white/10 transition-all text-white group-hover:bg-brand-purple">
+                    <span className="material-symbols-outlined text-lg">arrow_back</span>
+                </button>
+                <button onClick={nextSlide} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/30 hover:bg-brand-purple backdrop-blur-md border border-white/10 transition-all text-white group-hover:bg-brand-purple">
+                    <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                </button>
+            </div>
+          </div>
+      </div>
     </section>
   );
 };

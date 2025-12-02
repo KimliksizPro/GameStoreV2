@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { availableAvatars } from '../data/avatars';
 import { useTranslation } from '../hooks/useTranslation';
@@ -51,54 +49,75 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSignup, on
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={handleClose}>
-      <div className="bg-[#1C162D] rounded-xl border border-gray-800 w-full max-w-md" onClick={e => e.stopPropagation()}>
-        <form onSubmit={handleSubmit} className="p-8">
-          <h2 className="text-2xl font-bold mb-2 text-white text-center">{t('modals.createAccount')}</h2>
-          <p className="text-brand-gray text-center mb-6">{t('modals.joinCommunity')}</p>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={handleClose}>
+      <div className="bg-[#1C162D] rounded-3xl border border-white/10 w-full max-w-lg shadow-2xl relative overflow-hidden group max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        
+        {/* Decorative Glow */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-brand-purple/20 blur-3xl rounded-full pointer-events-none group-hover:bg-brand-purple/30 transition-colors duration-500"></div>
+
+        <form onSubmit={handleSubmit} className="p-8 relative z-10">
+          <div className="text-center mb-8">
+             <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10 backdrop-blur-md shadow-inner">
+                <span className="material-symbols-outlined text-3xl text-brand-purple">person_add</span>
+             </div>
+             <h2 className="text-3xl font-black text-white tracking-tight mb-2">{t('modals.createAccount')}</h2>
+             <p className="text-brand-gray text-sm">{t('modals.joinCommunity')}</p>
+          </div>
           
           {error && (
-            <div className="bg-red-500/10 text-red-400 text-sm p-3 rounded-lg mb-4 text-center">
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-4 rounded-xl mb-6 text-center flex items-center justify-center gap-2">
+               <span className="material-symbols-outlined text-lg">error</span>
               {error}
             </div>
           )}
 
           <div className="space-y-4 mb-6">
-            <input
-              type="text"
-              placeholder={t('modals.username')}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              className="w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white"
-            />
-             <input
-              type="email"
-              placeholder={t('modals.email')}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white"
-            />
-            <input
-              type="password"
-              placeholder={t('modals.password')}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white"
-            />
+            <div className="relative">
+                <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    className="w-full bg-[#0f0720] rounded-xl p-4 pl-12 border border-white/10 focus:ring-2 focus:ring-brand-purple focus:border-brand-purple text-white transition-all placeholder:text-gray-600"
+                    placeholder={t('modals.username')}
+                />
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">person</span>
+            </div>
+            
+             <div className="relative">
+                <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full bg-[#0f0720] rounded-xl p-4 pl-12 border border-white/10 focus:ring-2 focus:ring-brand-purple focus:border-brand-purple text-white transition-all placeholder:text-gray-600"
+                    placeholder={t('modals.email')}
+                />
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">mail</span>
+            </div>
+
+            <div className="relative">
+                <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full bg-[#0f0720] rounded-xl p-4 pl-12 border border-white/10 focus:ring-2 focus:ring-brand-purple focus:border-brand-purple text-white transition-all placeholder:text-gray-600"
+                    placeholder={t('modals.password')}
+                />
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">lock</span>
+            </div>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-brand-light-purple mb-2">{t('modals.chooseAvatar')}</label>
-            <div className="grid grid-cols-6 gap-3">
+          <div className="mb-8">
+            <label className="block text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider text-center">{t('modals.chooseAvatar')}</label>
+            <div className="grid grid-cols-5 gap-3 p-3 bg-[#0f0720] rounded-2xl border border-white/5">
               {availableAvatars.map((avatar, index) => (
                 <button
                   key={index}
                   type="button"
                   onClick={() => setSelectedAvatar(avatar)}
-                  className={`relative w-full aspect-square rounded-full overflow-hidden transition-all duration-200 transform hover:scale-110 focus:outline-none ${selectedAvatar === avatar ? 'ring-2 ring-primary ring-offset-2 ring-offset-[#1C162D]' : 'ring-2 ring-transparent'}`}
+                  className={`relative w-full aspect-square rounded-xl overflow-hidden transition-all duration-200 transform hover:scale-110 focus:outline-none ${selectedAvatar === avatar ? 'ring-2 ring-brand-purple ring-offset-2 ring-offset-[#0f0720] opacity-100 scale-105' : 'opacity-60 hover:opacity-100'}`}
                 >
                   <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover" />
                 </button>
@@ -106,17 +125,24 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSignup, on
             </div>
           </div>
           
-          <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-800">
-            <button type="button" onClick={handleClose} className="text-gray-300 font-bold py-2 px-4 rounded-lg transition-colors hover:bg-gray-700">{t('modals.cancel')}</button>
-            <button type="submit" className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-6 rounded-lg transition-colors disabled:opacity-50" disabled={loading}>
-              {loading ? t('modals.creating') : t('modals.signup')}
-            </button>
-          </div>
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-brand-purple to-violet-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-brand-purple/25 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                    <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                    {t('modals.creating')}
+                </div>
+            ) : t('modals.signup')}
+          </button>
         </form>
-         <div className="bg-brand-dark-2/50 text-center p-4 border-t border-gray-800 rounded-b-xl">
+
+         <div className="bg-[#150d24] text-center p-6 border-t border-white/5">
             <p className="text-sm text-brand-gray">
                 {t('modals.haveAccount')}{' '}
-                <button onClick={onSwitchToLogin} className="font-semibold text-brand-light-purple hover:underline">
+                <button onClick={onSwitchToLogin} className="font-bold text-white hover:text-brand-purple transition-colors ml-1">
                     {t('modals.login')}
                 </button>
             </p>

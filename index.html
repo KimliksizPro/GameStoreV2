@@ -37,19 +37,20 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             colors: {
-              'brand-dark': '#161022',
-              'brand-dark-2': '#1C162D',
-              'brand-purple': '#5211d4',
-              'brand-light-purple': '#a492c9',
+              'brand-dark': '#0f0720',
+              'brand-dark-2': '#1a102e',
+              'brand-purple': '#7c3aed',
+              'brand-light-purple': '#a78bfa',
               'brand-gray': '#9ca3af',
               'brand-light-gray': '#4b5563',
               // New admin colors
-              "primary": "#5211d4",
+              "primary": "#7c3aed",
               "background-light": "#f6f6f8",
-              "background-dark": "#161022",
+              "background-dark": "#0f0720",
             },
             fontFamily: {
               "display": ["Space Grotesk", "sans-serif"]
@@ -64,6 +65,10 @@
                 },
               },
             }),
+            backgroundImage: {
+              'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+              'hero-glow': 'conic-gradient(from 90deg at 50% 50%, #00000000 50%, #7c3aed 100%)',
+            }
           },
         },
          plugins: [
@@ -75,7 +80,7 @@
     <style>
        .material-symbols-outlined {
             font-variation-settings:
-            'FILL' 0,
+            'FILL' 1,
             'wght' 400,
             'GRAD' 0,
             'opsz' 24
@@ -85,21 +90,26 @@
         color-scheme: dark;
       }
       body {
-        background-color: #161022;
+        background-color: #0f0720;
+        background-image: 
+          radial-gradient(circle at 50% -20%, #2e1065 0%, transparent 40%),
+          radial-gradient(circle at 100% 50%, #1e1b4b 0%, transparent 30%);
+        background-attachment: fixed;
+        min-height: 100vh;
       }
       ::-webkit-scrollbar {
         width: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #1a102b;
+        background: #0f0720;
       }
       ::-webkit-scrollbar-thumb {
-        background-color: #4b5563;
+        background-color: #332747;
         border-radius: 10px;
-        border: 2px solid #1a102b;
+        border: 2px solid #0f0720;
       }
        ::-webkit-scrollbar-thumb:hover {
-        background-color: #5211d4;
+        background-color: #7c3aed;
       }
 
       @keyframes fadeIn {
@@ -111,14 +121,14 @@
         to { opacity: 1; transform: translateY(0); }
       }
       .animate-fadeIn {
-        animation: fadeIn 0.5s ease-in-out forwards;
+        animation: fadeIn 0.6s ease-out forwards;
       }
       .animate-fadeInUp {
         opacity: 0; /* Start hidden */
-        animation: fadeInUp 0.5s ease-in-out forwards;
+        animation: fadeInUp 0.6s ease-out forwards;
       }
       .page-transition {
-        animation: fadeIn 0.3s ease-in-out;
+        animation: fadeIn 0.4s ease-out;
       }
        @keyframes shimmer {
         0% {
@@ -129,9 +139,20 @@
         }
       }
       .animate-shimmer {
-        background: linear-gradient(to right, #161022 8%, #1f1633 18%, #161022 33%);
+        background: linear-gradient(to right, #1a102e 8%, #271b3f 18%, #1a102e 33%);
         background-size: 2000px 100%;
         animation: shimmer 1.5s linear infinite;
+      }
+      
+      .glass-panel {
+        background: rgba(26, 16, 46, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      
+      .text-glow {
+        text-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
       }
     </style>
   <script type="importmap">
@@ -146,7 +167,7 @@
 }
 </script>
 </head>
-  <body class="bg-background-dark font-display text-white">
+  <body class="bg-brand-dark font-display text-white selection:bg-brand-purple selection:text-white">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

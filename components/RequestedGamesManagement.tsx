@@ -29,56 +29,65 @@ const RequestedGamesManagement: React.FC<RequestedGamesManagementProps> = ({ req
     };
 
   return (
-    <>
-        <header className="flex flex-wrap justify-between items-center gap-4 mb-6">
-            <h1 className="text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">Game Requests</h1>
-             <div className="flex items-center gap-4">
-                <span className="text-brand-gray text-sm">{requestedGames.length} total requests</span>
+    <div className="space-y-6">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 className="text-3xl font-black text-white tracking-tight">Game Requests</h1>
+                <p className="text-brand-gray mt-1">Review and manage game requests from the community.</p>
+            </div>
+             <div className="bg-brand-purple/10 border border-brand-purple/20 px-4 py-2 rounded-xl">
+                <span className="text-brand-light-purple font-bold text-lg">{requestedGames.length}</span>
+                <span className="text-brand-light-purple/70 text-sm ml-2 font-medium">Pending Requests</span>
             </div>
         </header>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-[#1C162D] rounded-xl border border-gray-800">
-            <div className="flex-1">
-                <label className="relative flex items-center h-12 w-full">
-                    <div className="text-[#a492c9] absolute left-0 flex items-center justify-center pl-4">
-                        <span className="material-symbols-outlined">search</span>
-                    </div>
-                    <input className="form-input w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-700 bg-[#2f2348] focus:border-primary/50 h-full placeholder:text-[#a492c9] pl-12 pr-4" placeholder="Search requests..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                </label>
+         <div className="bg-[#1a102e]/60 backdrop-blur-xl rounded-3xl border border-white/5 p-2">
+            <div className="relative w-full">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                <input 
+                    className="w-full bg-[#0f0720]/50 rounded-xl py-3 pl-12 pr-4 border border-transparent focus:border-brand-purple focus:ring-0 text-white placeholder:text-gray-600 transition-all" 
+                    placeholder="Search requests..." 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                />
             </div>
         </div>
 
         {/* Desktop Table */}
-        <div className="overflow-x-auto bg-[#1C162D] rounded-xl border border-gray-800 hidden md:block">
-            <table className="w-full text-sm text-left text-gray-400">
-                <thead className="text-xs text-gray-400 uppercase bg-[#2f2348]">
-                    <tr>
-                        <th scope="col" className="px-6 py-3 font-semibold">Game Title</th>
-                        <th scope="col" className="px-6 py-3 font-semibold">Requested By</th>
-                        <th scope="col" className="px-6 py-3 font-semibold">Reason</th>
-                        <th scope="col" className="px-6 py-3 font-semibold">Date</th>
-                        <th scope="col" className="px-6 py-3 font-semibold text-right">Actions</th>
+        <div className="hidden md:block overflow-hidden bg-[#1a102e]/60 backdrop-blur-xl rounded-3xl border border-white/5 shadow-2xl">
+            <table className="w-full text-left border-collapse">
+                <thead>
+                    <tr className="bg-white/5 border-b border-white/5 text-gray-400 text-xs uppercase tracking-wider">
+                        <th className="px-6 py-4 font-bold">Game Title</th>
+                        <th className="px-6 py-4 font-bold">Requested By</th>
+                        <th className="px-6 py-4 font-bold">Reason</th>
+                        <th className="px-6 py-4 font-bold">Time</th>
+                        <th className="px-6 py-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-white/5">
                     {filteredGames.map(req => (
-                        <tr key={req.id} className="border-b border-gray-800 hover:bg-primary/10">
-                            <td scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap">{req.gameTitle}</td>
+                        <tr key={req.id} className="hover:bg-white/5 transition-colors group">
+                            <td className="px-6 py-4 font-bold text-white">{req.gameTitle}</td>
                             <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
-                                    <img src={req.avatarUrl} alt={req.requestedBy} className="w-8 h-8 rounded-full object-cover" />
-                                    <span>{req.requestedBy}</span>
+                                    <img src={req.avatarUrl} alt={req.requestedBy} className="w-8 h-8 rounded-lg object-cover border border-white/10" />
+                                    <span className="text-gray-300 font-medium">{req.requestedBy}</span>
                                 </div>
                             </td>
-                            <td className="px-6 py-4 max-w-sm truncate" title={req.reason}>{req.reason || 'N/A'}</td>
-                            <td className="px-6 py-4">{formatDistanceToNow(new Date(req.createdAt), { addSuffix: true, locale })}</td>
+                            <td className="px-6 py-4 max-w-sm truncate text-gray-400 italic" title={req.reason}>
+                                "{req.reason || 'No reason provided.'}"
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                                {formatDistanceToNow(new Date(req.createdAt), { addSuffix: true, locale })}
+                            </td>
                             <td className="px-6 py-4 text-right">
                                 <button 
                                   onClick={() => handleDelete(req.id, req.gameTitle)} 
-                                  className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-red-500/10"
+                                  className="w-9 h-9 inline-flex items-center justify-center rounded-xl bg-white/5 hover:bg-red-500 hover:text-white text-gray-400 transition-all opacity-60 group-hover:opacity-100"
                                   title="Delete request"
                                 >
-                                    <span className="material-symbols-outlined text-base">delete</span>
+                                    <span className="material-symbols-outlined text-lg">delete</span>
                                 </button>
                             </td>
                         </tr>
@@ -88,35 +97,39 @@ const RequestedGamesManagement: React.FC<RequestedGamesManagementProps> = ({ req
         </div>
 
         {/* Mobile Card List */}
-        <div className="space-y-4 md:hidden">
+        <div className="grid grid-cols-1 gap-4 md:hidden">
             {filteredGames.length > 0 ? filteredGames.map(req => (
-                <div key={req.id} className="bg-[#1C162D] rounded-xl border border-gray-800 p-4 space-y-3">
-                    <div className="flex items-start gap-4">
-                        <div className="flex-1">
-                             <h3 className="font-bold text-white mb-1">{req.gameTitle}</h3>
-                             <div className="flex items-center gap-2 mb-2">
-                                <img src={req.avatarUrl} alt={req.requestedBy} className="w-6 h-6 rounded-full object-cover" />
-                                <span className="text-sm text-gray-300">{req.requestedBy}</span>
-                             </div>
-                            <p className="text-sm text-gray-400 italic">"{req.reason || 'No reason provided.'}"</p>
-                        </div>
-                    </div>
-                    <div className="flex justify-between items-center pt-3 border-t border-gray-700/50">
-                        <span className="text-xs text-gray-500">{formatDistanceToNow(new Date(req.createdAt), { addSuffix: true, locale })}</span>
-                        <button 
+                <div key={req.id} className="bg-[#1a102e]/60 backdrop-blur-xl rounded-2xl border border-white/5 p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                         <h3 className="font-bold text-white text-lg">{req.gameTitle}</h3>
+                         <button 
                             onClick={() => handleDelete(req.id, req.gameTitle)}
-                            className="text-gray-300 hover:text-red-400 text-sm flex items-center gap-1 py-1 px-2 rounded-md hover:bg-red-500/10"
-                            title="Delete request"
+                            className="p-2 -mr-2 text-gray-400 hover:text-red-400"
                         >
-                            <span className="material-symbols-outlined text-base">delete</span> Delete
+                            <span className="material-symbols-outlined">delete</span>
                         </button>
                     </div>
+                    
+                    <div className="flex items-center gap-2">
+                        <img src={req.avatarUrl} alt={req.requestedBy} className="w-6 h-6 rounded-lg object-cover" />
+                        <span className="text-sm font-bold text-gray-300">{req.requestedBy}</span>
+                        <span className="text-gray-600 text-xs">•</span>
+                        <span className="text-xs text-gray-500">{formatDistanceToNow(new Date(req.createdAt), { addSuffix: true, locale })}</span>
+                    </div>
+                    
+                    {req.reason && (
+                         <div className="p-3 bg-[#0f0720]/50 rounded-xl border border-white/5">
+                            <p className="text-sm text-gray-400 italic">"{req.reason}"</p>
+                        </div>
+                    )}
                 </div>
             )) : (
-                 <p className="text-center text-gray-500 py-8">No game requests found for "{searchQuery}".</p>
+                 <div className="text-center py-12 bg-white/5 rounded-3xl border border-white/5 border-dashed">
+                    <p className="text-gray-500">No requests found.</p>
+                </div>
             )}
         </div>
-    </>
+    </div>
   );
 };
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Game } from '../types';
 
@@ -8,11 +9,9 @@ interface GameManagementProps {
   onDeleteGame: (id: string) => void;
 }
 
-// FIX: Initialize LocalizedString fields correctly to match the Game type.
 const emptyGame: Omit<Game, 'id'> = {
   title: { en: '', tr: '' },
   genre: { en: '', tr: '' },
-  // FIX: Added missing developer and publisher properties to align with the Game type.
   developer: { en: '', tr: '' },
   publisher: { en: '', tr: '' },
   category: { en: '', tr: '' },
@@ -29,28 +28,28 @@ const emptyGame: Omit<Game, 'id'> = {
 };
 
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => (
-    <div>
-        <label htmlFor={props.id || props.name} className="block text-sm font-medium text-brand-light-purple mb-2">{label}</label>
-        <input {...props} className="form-input w-full bg-[#2f2348] rounded-lg p-2 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white disabled:opacity-50" />
+    <div className="group">
+        <label htmlFor={props.id || props.name} className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider ml-1 group-focus-within:text-brand-purple transition-colors">{label}</label>
+        <input {...props} className="w-full bg-[#0f0720] rounded-xl p-4 border border-white/10 focus:ring-2 focus:ring-brand-purple focus:border-brand-purple text-white transition-all placeholder:text-gray-600 disabled:opacity-50" />
     </div>
 );
 
 const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }> = ({ label, ...props }) => (
-    <div>
-        <label htmlFor={props.id || props.name} className="block text-sm font-medium text-brand-light-purple mb-2">{label}</label>
-        <textarea {...props} className="form-textarea w-full bg-[#2f2348] rounded-lg p-2 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white"></textarea>
+    <div className="group">
+        <label htmlFor={props.id || props.name} className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider ml-1 group-focus-within:text-brand-purple transition-colors">{label}</label>
+        <textarea {...props} className="w-full bg-[#0f0720] rounded-xl p-4 border border-white/10 focus:ring-2 focus:ring-brand-purple focus:border-brand-purple text-white transition-all placeholder:text-gray-600 resize-none"></textarea>
     </div>
 );
 
 const FormToggle: React.FC<{ checked: boolean; onChange: (checked: boolean) => void; name: string, label: string, description: string }> = ({ checked, onChange, name, label, description }) => (
-     <div className="flex items-center justify-between">
+     <div className="flex items-center justify-between p-4 bg-[#0f0720] rounded-xl border border-white/10">
         <div>
-            <label className="block text-sm font-medium text-brand-light-purple">{label}</label>
-            <p className="text-xs text-gray-500">{description}</p>
+            <label className="block text-sm font-bold text-white">{label}</label>
+            <p className="text-xs text-gray-500 mt-0.5">{description}</p>
         </div>
         <label htmlFor={name} className="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" id={name} name={name} className="sr-only peer" checked={checked} onChange={e => onChange(e.target.checked)} />
-            <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            <div className="w-12 h-7 bg-gray-700 rounded-full peer peer-focus:ring-2 peer-focus:ring-brand-purple peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-purple shadow-inner"></div>
         </label>
     </div>
 );
@@ -72,11 +71,8 @@ const GameFormModal: React.FC<{
 
     const isEditing = 'id' in formData;
 
-    // FIX: Handle updates for both plain and LocalizedString fields.
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
-        
-        // FIX: Added developer and publisher to handle LocalizedString updates.
         const localizedFields = ['title', 'genre', 'category', 'description', 'developer', 'publisher'];
 
         if (type === 'checkbox' && 'checked' in e.target) {
@@ -101,50 +97,56 @@ const GameFormModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={onClose}>
-            <div className="bg-[#1C162D] rounded-xl border border-gray-800 w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={onClose}>
+            <div className="bg-[#1C162D] rounded-3xl border border-white/10 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                 <div className="sticky top-0 z-10 bg-[#1C162D]/90 backdrop-blur-md border-b border-white/5 p-6 flex justify-between items-center">
+                    <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                        <span className="material-symbols-outlined text-brand-purple text-3xl">{isEditing ? 'edit_square' : 'add_circle'}</span>
+                        {isEditing ? `Edit Game` : 'Add New Game'}
+                    </h2>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                        <span className="material-symbols-outlined text-gray-400 hover:text-white">close</span>
+                    </button>
+                 </div>
+
                 <form onSubmit={handleSubmit} className="p-8">
-                    {/* FIX: Display LocalizedString correctly. */}
-                    <h2 className="text-2xl font-bold mb-6 text-white">{isEditing ? `Editing: ${formData.title.en}` : 'Add New Game'}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                        <div className="md:col-span-2">
-                         {/* FIX: Use .en property for LocalizedString value. */}
-                         <FormInput label="Title" type="text" name="title" id="title" value={formData.title.en} onChange={handleChange} required />
+                         <FormInput label="Game Title" type="text" name="title" id="title" value={formData.title.en} onChange={handleChange} required placeholder="e.g. Cyberpunk 2077" />
                         </div>
-                        {/* FIX: Use .en property for LocalizedString value. */}
-                        <FormInput label="Genre (e.g., Action/RPG)" type="text" name="genre" id="genre" value={formData.genre.en} onChange={handleChange} required />
-                        <FormInput label="Platform (e.g., PC, PS5)" type="text" name="platform" id="platform" value={formData.platform || ''} onChange={handleChange} required />
-                        {/* FIX: Added inputs for developer and publisher. */}
+                        <FormInput label="Genre" type="text" name="genre" id="genre" value={formData.genre.en} onChange={handleChange} required placeholder="e.g. RPG / FPS" />
+                        <FormInput label="Platform" type="text" name="platform" id="platform" value={formData.platform || ''} onChange={handleChange} required placeholder="PC, PS5, Xbox" />
+                        
                         <FormInput label="Developer" type="text" name="developer" id="developer" value={formData.developer.en} onChange={handleChange} required />
                         <FormInput label="Publisher" type="text" name="publisher" id="publisher" value={formData.publisher.en} onChange={handleChange} required />
-                        {/* FIX: Use .en property for LocalizedString value. */}
-                        <FormInput label="Category" type="text" name="category" id="category" value={formData.category.en} onChange={handleChange} required />
-                        <FormInput label="Price" type="number" name="price" id="price" value={formData.price} onChange={handleChange} required step="0.01" min="0" />
+                        
+                        <FormInput label="Category" type="text" name="category" id="category" value={formData.category.en} onChange={handleChange} required placeholder="e.g. Action" />
+                        <FormInput label="Price ($)" type="number" name="price" id="price" value={formData.price} onChange={handleChange} required step="0.01" min="0" />
                         <FormInput label="Release Date" type="date" name="releaseDate" id="releaseDate" value={formData.releaseDate} onChange={handleChange} required />
-                        <FormInput label="Patch URL (Optional)" type="url" name="patchUrl" id="patchUrl" value={formData.patchUrl || ''} onChange={handleChange} />
+                        <FormInput label="Patch URL" type="url" name="patchUrl" id="patchUrl" value={formData.patchUrl || ''} onChange={handleChange} placeholder="https://..." />
+                        
+                        <div className="md:col-span-2 space-y-4">
+                             <FormInput label="Vertical Cover Image URL (Portrait)" type="url" name="verticalImageUrl" id="verticalImageUrl" value={formData.verticalImageUrl} onChange={handleChange} required placeholder="https://..." />
+                             <FormInput label="Horizontal Hero Image URL (Landscape)" type="url" name="horizontalImageUrl" id="horizontalImageUrl" value={formData.horizontalImageUrl} onChange={handleChange} required placeholder="https://..." />
+                             <FormInput label="Download Link" type="url" name="downloadUrl" id="downloadUrl" value={formData.downloadUrl} onChange={handleChange} required placeholder="https://..." />
+                        </div>
+
                         <div className="md:col-span-2">
-                          <FormInput label="Vertical Image URL" type="url" name="verticalImageUrl" id="verticalImageUrl" value={formData.verticalImageUrl} onChange={handleChange} required />
+                          <FormTextarea label="Description" name="description" id="description" value={formData.description.en} onChange={handleChange} required rows={5} placeholder="Game description..." />
                         </div>
                          <div className="md:col-span-2">
-                          <FormInput label="Horizontal Image URL" type="url" name="horizontalImageUrl" id="horizontalImageUrl" value={formData.horizontalImageUrl} onChange={handleChange} required />
+                            <FormTextarea label="Screenshots (Comma separated URLs)" name="screenshots" id="screenshots" value={(formData.screenshots || []).join(', ')} onChange={handleScreenshotChange} rows={3} placeholder="https://image1.jpg, https://image2.jpg" />
                         </div>
                          <div className="md:col-span-2">
-                          <FormInput label="Download URL" type="url" name="downloadUrl" id="downloadUrl" value={formData.downloadUrl} onChange={handleChange} required />
-                        </div>
-                        <div className="md:col-span-2">
-                          {/* FIX: Use .en property for LocalizedString value. */}
-                          <FormTextarea label="Description" name="description" id="description" value={formData.description.en} onChange={handleChange} required rows={4} />
-                        </div>
-                         <div className="md:col-span-2">
-                            <FormTextarea label="Screenshots (comma-separated URLs)" name="screenshots" id="screenshots" value={(formData.screenshots || []).join(', ')} onChange={handleScreenshotChange} rows={3} />
-                        </div>
-                         <div className="md:col-span-2 bg-[#2f2348] p-4 rounded-lg border border-gray-700">
-                           <FormToggle name="featured" label="Featured Game" description="Display this game in the hero section on the homepage." checked={formData.featured || false} onChange={(checked) => setFormData(prev => ({...prev, featured: checked}))} />
+                           <FormToggle name="featured" label="Featured Game" description="Show this game in the main hero slider on the homepage." checked={formData.featured || false} onChange={(checked) => setFormData(prev => ({...prev, featured: checked}))} />
                         </div>
                     </div>
-                    <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-800">
-                        <button type="button" onClick={onClose} className="text-gray-300 font-bold py-2 px-4 rounded-lg transition-colors hover:bg-gray-700">Cancel</button>
-                        <button type="submit" className="bg-primary hover:bg-violet-600 text-white font-bold py-2 px-6 rounded-lg transition-colors">{isEditing ? 'Update Game' : 'Add Game'}</button>
+                    
+                    <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-white/5">
+                        <button type="button" onClick={onClose} className="text-gray-400 font-bold py-3 px-6 rounded-xl transition-colors hover:bg-white/5 hover:text-white">Cancel</button>
+                        <button type="submit" className="bg-brand-purple hover:bg-violet-500 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-brand-purple/30 hover:scale-[1.02]">
+                            {isEditing ? 'Save Changes' : 'Add Game'}
+                        </button>
                     </div>
                 </form>
             </div>
@@ -158,11 +160,10 @@ const GameManagement: React.FC<GameManagementProps> = ({ games, onAddGame, onUpd
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingGame, setEditingGame] = useState<Game | Omit<Game, 'id'> | null>(null);
 
-    const ITEMS_PER_PAGE = 10;
+    const ITEMS_PER_PAGE = 8;
 
     const filteredGames = useMemo(() => {
         return games.filter(game =>
-            // FIX: Search by a specific language property of the LocalizedString.
             game.title.en.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [games, searchQuery]);
@@ -205,64 +206,91 @@ const GameManagement: React.FC<GameManagementProps> = ({ games, onAddGame, onUpd
     };
 
   return (
-    <>
-        <header className="flex flex-wrap justify-between items-center gap-4 mb-6">
-            <h1 className="text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">Manage Games</h1>
-            <button onClick={handleAddClick} className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-violet-600 transition-colors">
-                <span className="material-symbols-outlined mr-2 text-base">add</span>
-                <span className="truncate">Add New Game</span>
+    <div className="space-y-6">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 className="text-3xl font-black text-white tracking-tight">Game Library</h1>
+                <p className="text-brand-gray mt-1">Manage, add, or edit games in your store.</p>
+            </div>
+            <button onClick={handleAddClick} className="bg-brand-purple hover:bg-violet-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-brand-purple/25 flex items-center gap-2 border border-white/10 hover:-translate-y-0.5">
+                <span className="material-symbols-outlined">add</span>
+                <span>Add Game</span>
             </button>
         </header>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-[#1C162D] rounded-xl border border-gray-800">
-            <div className="flex-1">
-                <label className="relative flex items-center h-12 w-full">
-                    <div className="text-[#a492c9] absolute left-0 flex items-center justify-center pl-4">
-                        <span className="material-symbols-outlined">search</span>
-                    </div>
-                    <input className="form-input w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-700 bg-[#2f2348] focus:border-primary/50 h-full placeholder:text-[#a492c9] pl-12 pr-4" placeholder="Search games by title..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                </label>
+        <div className="bg-[#1a102e]/60 backdrop-blur-xl rounded-3xl border border-white/5 p-2 flex flex-col md:flex-row gap-2">
+            <div className="relative flex-1">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                <input 
+                    className="w-full bg-[#0f0720]/50 rounded-xl py-3 pl-12 pr-4 border border-transparent focus:border-brand-purple focus:ring-0 text-white placeholder:text-gray-600 transition-all" 
+                    placeholder="Search games by title..." 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                />
             </div>
-             <div className="flex gap-3 items-center">
-                <button className="flex h-12 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#2f2348] px-4 border border-gray-700 hover:bg-primary/20">
-                    <p className="text-white text-sm font-medium">Genre</p>
-                    <span className="material-symbols-outlined text-white">expand_more</span>
+             <div className="flex gap-2">
+                <button className="flex items-center gap-2 px-4 py-3 bg-[#0f0720]/50 hover:bg-[#0f0720] text-gray-300 rounded-xl transition-colors font-medium border border-transparent hover:border-white/5">
+                    <span className="material-symbols-outlined text-xl">filter_list</span>
+                    <span>Filter</span>
                 </button>
-                <button className="flex h-12 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#2f2348] px-4 border border-gray-700 hover:bg-primary/20">
-                    <p className="text-white text-sm font-medium">Platform</p>
-                    <span className="material-symbols-outlined text-white">expand_more</span>
+                 <button className="flex items-center gap-2 px-4 py-3 bg-[#0f0720]/50 hover:bg-[#0f0720] text-gray-300 rounded-xl transition-colors font-medium border border-transparent hover:border-white/5">
+                    <span className="material-symbols-outlined text-xl">sort</span>
+                    <span>Sort</span>
                 </button>
             </div>
         </div>
 
         {/* Desktop Table */}
-        <div className="overflow-x-auto bg-[#1C162D] rounded-xl border border-gray-800 hidden md:block">
-            <table className="w-full text-sm text-left text-gray-400">
-                <thead className="text-xs text-gray-400 uppercase bg-[#2f2348]">
-                    <tr>
-                        <th scope="col" className="px-6 py-3 font-semibold">Game</th>
-                        <th scope="col" className="px-6 py-3 font-semibold">Genre</th>
-                        <th scope="col" className="px-6 py-3 font-semibold">Platform</th>
-                        <th scope="col" className="px-6 py-3 font-semibold">Release Date</th>
-                        <th scope="col" className="px-6 py-3 font-semibold text-right">Actions</th>
+        <div className="hidden md:block overflow-hidden bg-[#1a102e]/60 backdrop-blur-xl rounded-3xl border border-white/5 shadow-2xl">
+            <table className="w-full text-left border-collapse">
+                <thead>
+                    <tr className="bg-white/5 border-b border-white/5 text-gray-400 text-xs uppercase tracking-wider">
+                        <th className="px-6 py-4 font-bold">Game Info</th>
+                        <th className="px-6 py-4 font-bold">Details</th>
+                        <th className="px-6 py-4 font-bold">Release Date</th>
+                        <th className="px-6 py-4 font-bold">Status</th>
+                        <th className="px-6 py-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-white/5">
                     {paginatedGames.map(game => (
-                        <tr key={game.id} className="border-b border-gray-800 hover:bg-primary/10">
-                            <th scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap flex items-center gap-4">
-                                {/* FIX: Use a property of LocalizedString for alt text and display. */}
-                                <img src={game.verticalImageUrl} alt={game.title.en} className="w-12 h-16 object-cover rounded-lg"/>
-                                <span>{game.title.en}</span>
-                            </th>
-                            {/* FIX: Use a property of LocalizedString for display. */}
-                            <td className="px-6 py-4">{game.genre.en}</td>
-                            <td className="px-6 py-4">{game.platform || 'N/A'}</td>
-                            <td className="px-6 py-4">{new Date(game.releaseDate).toLocaleDateString()}</td>
+                        <tr key={game.id} className="hover:bg-white/5 transition-colors group">
+                            <td className="px-6 py-4">
+                                <div className="flex items-center gap-4">
+                                    <img src={game.verticalImageUrl} alt={game.title.en} className="w-12 h-16 object-cover rounded-lg shadow-md border border-white/5 group-hover:scale-105 transition-transform duration-300"/>
+                                    <div>
+                                        <h4 className="font-bold text-white text-base">{game.title.en}</h4>
+                                        <p className="text-xs text-gray-500 mt-0.5">{game.developer.en}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-sm text-gray-300">{game.genre.en}</span>
+                                    <span className="text-xs text-brand-light-purple bg-brand-purple/10 px-2 py-0.5 rounded-md self-start border border-brand-purple/20">{game.platform || 'N/A'}</span>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-400 font-mono">
+                                {new Date(game.releaseDate).toLocaleDateString()}
+                            </td>
+                             <td className="px-6 py-4">
+                                {game.featured ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                                        <span className="material-symbols-outlined text-xs">star</span> Featured
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-gray-700/30 text-gray-400 border border-gray-600/30">Standard</span>
+                                )}
+                            </td>
                             <td className="px-6 py-4 text-right">
-                                <button onClick={() => handleEditClick(game)} className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-primary/30"><span className="material-symbols-outlined text-base">edit</span></button>
-                                {/* FIX: Pass a string from LocalizedString to the handler. */}
-                                <button onClick={() => handleDelete(game.id, game.title.en)} className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-red-500/10"><span className="material-symbols-outlined text-base">delete</span></button>
+                                <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => handleEditClick(game)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-brand-purple hover:text-white text-gray-400 transition-all" title="Edit">
+                                        <span className="material-symbols-outlined text-lg">edit</span>
+                                    </button>
+                                    <button onClick={() => handleDelete(game.id, game.title.en)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-red-500 hover:text-white text-gray-400 transition-all" title="Delete">
+                                        <span className="material-symbols-outlined text-lg">delete</span>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     ))}
@@ -271,46 +299,44 @@ const GameManagement: React.FC<GameManagementProps> = ({ games, onAddGame, onUpd
         </div>
 
         {/* Mobile Card List */}
-        <div className="space-y-4 md:hidden">
+        <div className="grid grid-cols-1 gap-4 md:hidden">
             {paginatedGames.length > 0 ? paginatedGames.map(game => (
-                <div key={game.id} className="bg-[#1C162D] rounded-xl border border-gray-800 p-4 space-y-3">
-                    <div className="flex items-start gap-4">
-                        <img src={game.verticalImageUrl} alt={game.title.en} className="w-16 h-20 object-cover rounded-lg flex-shrink-0"/>
-                        <div className="flex-1">
-                            {/* FIX: Use a property of LocalizedString for display. */}
-                            <h3 className="font-bold text-white mb-1">{game.title.en}</h3>
-                            {/* FIX: Use a property of LocalizedString for display. */}
-                            <p className="text-xs text-gray-400"><strong className="font-medium text-gray-300">Genre:</strong> {game.genre.en}</p>
-                            <p className="text-xs text-gray-400"><strong className="font-medium text-gray-300">Platform:</strong> {game.platform || 'N/A'}</p>
-                            <p className="text-xs text-gray-400"><strong className="font-medium text-gray-300">Released:</strong> {new Date(game.releaseDate).toLocaleDateString()}</p>
+                <div key={game.id} className="bg-[#1a102e]/60 backdrop-blur-xl rounded-2xl border border-white/5 p-4 flex gap-4 shadow-lg">
+                    <img src={game.verticalImageUrl} alt={game.title.en} className="w-20 h-28 object-cover rounded-xl shadow-md flex-shrink-0"/>
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                        <div>
+                             <div className="flex justify-between items-start mb-1">
+                                <h3 className="font-bold text-white text-lg truncate pr-2">{game.title.en}</h3>
+                                {game.featured && <span className="material-symbols-outlined text-yellow-400 text-lg">star</span>}
+                             </div>
+                             <p className="text-xs text-brand-light-purple mb-2">{game.genre.en} • {game.platform}</p>
+                             <p className="text-xs text-gray-500">{new Date(game.releaseDate).toLocaleDateString()}</p>
                         </div>
-                    </div>
-                    <div className="flex justify-end items-center gap-2 pt-3 border-t border-gray-700/50">
-                        <button onClick={() => handleEditClick(game)} className="text-gray-300 hover:text-white text-sm flex items-center gap-1 py-1 px-2 rounded-md hover:bg-primary/30">
-                            <span className="material-symbols-outlined text-base">edit</span> Edit
-                        </button>
-                        {/* FIX: Pass a string from LocalizedString to the handler. */}
-                        <button onClick={() => handleDelete(game.id, game.title.en)} className="text-gray-300 hover:text-red-400 text-sm flex items-center gap-1 py-1 px-2 rounded-md hover:bg-red-500/10">
-                            <span className="material-symbols-outlined text-base">delete</span> Delete
-                        </button>
+                        <div className="flex justify-end gap-2 mt-2">
+                             <button onClick={() => handleEditClick(game)} className="px-3 py-1.5 bg-white/5 hover:bg-brand-purple text-gray-300 hover:text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1">
+                                <span className="material-symbols-outlined text-sm">edit</span> Edit
+                            </button>
+                             <button onClick={() => handleDelete(game.id, game.title.en)} className="px-3 py-1.5 bg-white/5 hover:bg-red-500 text-gray-300 hover:text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1">
+                                <span className="material-symbols-outlined text-sm">delete</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             )) : (
-                <p className="text-center text-gray-500 py-8">No games found for "{searchQuery}".</p>
+                <div className="text-center py-12 bg-white/5 rounded-3xl border border-white/5 border-dashed">
+                    <p className="text-gray-500">No games found matching "{searchQuery}".</p>
+                </div>
             )}
         </div>
 
          {totalPages > 1 && (
-            <div className="flex flex-col md:flex-row justify-between items-center mt-6 px-2 gap-4">
-                <span className="text-sm text-gray-400">
-                    Showing <span className="font-semibold text-white">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to <span className="font-semibold text-white">{Math.min(currentPage * ITEMS_PER_PAGE, filteredGames.length)}</span> of <span className="font-semibold text-white">{filteredGames.length}</span> Entries
+            <div className="flex flex-col sm:flex-row justify-between items-center bg-[#1a102e]/60 backdrop-blur-xl p-4 rounded-2xl border border-white/5">
+                <span className="text-sm text-gray-400 mb-4 sm:mb-0">
+                    Showing <span className="font-bold text-white">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> - <span className="font-bold text-white">{Math.min(currentPage * ITEMS_PER_PAGE, filteredGames.length)}</span> of <span className="font-bold text-white">{filteredGames.length}</span>
                 </span>
-                <div className="inline-flex -space-x-px rounded-md text-sm">
-                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="flex items-center justify-center px-3 h-8 text-gray-400 bg-[#2f2348] border border-gray-700 rounded-l-lg hover:bg-primary/30 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
-                    {[...Array(totalPages)].map((_, i) => (
-                        <button key={i} onClick={() => setCurrentPage(i + 1)} className={`flex items-center justify-center px-3 h-8 border ${currentPage === i + 1 ? 'text-white bg-primary border-primary' : 'text-gray-400 bg-[#2f2348] border-gray-700 hover:bg-primary/30 hover:text-white'}`}>{i + 1}</button>
-                    ))}
-                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="flex items-center justify-center px-3 h-8 text-gray-400 bg-[#2f2348] border border-gray-700 rounded-r-lg hover:bg-primary/30 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+                <div className="flex gap-2">
+                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-bold text-white transition-colors">Previous</button>
+                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-bold text-white transition-colors">Next</button>
                 </div>
             </div>
         )}
@@ -323,7 +349,7 @@ const GameManagement: React.FC<GameManagementProps> = ({ games, onAddGame, onUpd
                 game={editingGame}
             />
         )}
-    </>
+    </div>
   );
 };
 

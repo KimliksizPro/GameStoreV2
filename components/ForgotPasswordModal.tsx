@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 interface ForgotPasswordModalProps {
@@ -37,40 +36,56 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen, onClo
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={handleClose}>
-      <div className="bg-[#1C162D] rounded-xl border border-gray-800 w-full max-w-md" onClick={e => e.stopPropagation()}>
-        <form onSubmit={handleSubmit} className="p-8">
-          <h2 className="text-2xl font-bold mb-2 text-white text-center">Reset Password</h2>
-          <p className="text-brand-gray text-center mb-6">Enter your account's email address and we will send you a link to reset your password.</p>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={handleClose}>
+      <div className="bg-[#1C162D] rounded-3xl border border-white/10 w-full max-w-md shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
+         {/* Decorative Glow */}
+         <div className="absolute top-0 left-0 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full pointer-events-none"></div>
+
+        <form onSubmit={handleSubmit} className="p-8 relative z-10">
+          <div className="text-center mb-8">
+             <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10 backdrop-blur-md shadow-inner">
+                <span className="material-symbols-outlined text-3xl text-blue-400">lock_reset</span>
+             </div>
+             <h2 className="text-2xl font-black text-white tracking-tight mb-2">Reset Password</h2>
+             <p className="text-brand-gray text-sm">Enter your email and we'll help you get back in.</p>
+          </div>
           
           {success && (
-            <div className="bg-green-500/10 text-green-400 text-sm p-3 rounded-lg mb-4 text-center">
+            <div className="bg-green-500/10 border border-green-500/20 text-green-400 text-sm p-4 rounded-xl mb-6 text-center">
               {success}
             </div>
           )}
 
           <div className="space-y-4">
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white"
-            />
+             <div className="relative">
+                <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full bg-[#0f0720] rounded-xl p-4 pl-12 border border-white/10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white transition-all placeholder:text-gray-600"
+                    placeholder="Email Address"
+                />
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">mail</span>
+            </div>
           </div>
           
-          <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-800">
-            <button type="button" onClick={handleClose} className="text-gray-300 font-bold py-2 px-4 rounded-lg transition-colors hover:bg-gray-700">Cancel</button>
-            <button type="submit" className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-6 rounded-lg transition-colors disabled:opacity-50" disabled={loading || !!success}>
-              {loading ? 'Sending...' : 'Send Reset Link'}
+          <div className="flex gap-3 mt-8">
+            <button type="button" onClick={handleClose} className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 font-bold py-4 rounded-xl transition-colors">Cancel</button>
+            <button 
+                type="submit" 
+                className="flex-[2] bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50" 
+                disabled={loading || !!success}
+            >
+              {loading ? 'Sending...' : 'Send Link'}
             </button>
           </div>
         </form>
-         <div className="bg-brand-dark-2/50 text-center p-4 border-t border-gray-800 rounded-b-xl">
+
+         <div className="bg-[#150d24] text-center p-6 border-t border-white/5">
             <p className="text-sm text-brand-gray">
                 Remembered your password?{' '}
-                <button onClick={onSwitchToLogin} className="font-semibold text-brand-light-purple hover:underline">
+                <button onClick={onSwitchToLogin} className="font-bold text-white hover:text-blue-400 transition-colors ml-1">
                     Log in
                 </button>
             </p>

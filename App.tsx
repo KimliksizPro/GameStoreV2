@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -37,7 +33,7 @@ type View = {
 
 const themeColorMap = {
     purple: {
-      '--color-brand-purple': '109 40 217',
+      '--color-brand-purple': '124 58 237', // Updated to match new vibrant purple
       '--color-brand-light-purple': '167 139 250',
     },
     blue: {
@@ -51,10 +47,10 @@ const themeColorMap = {
 };
 
 const EmailVerificationBanner: React.FC<{ user: User, onResend: (user: User) => void }> = ({ user, onResend }) => (
-    <div className="bg-yellow-500/20 text-yellow-300 p-3 text-center text-sm border-b-2 border-yellow-500/50">
-        Your email is not verified. Please check your inbox for a verification link.
-        <button onClick={() => onResend(user)} className="font-bold underline ml-2 hover:text-white">
-            Resend verification email
+    <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-500/90 backdrop-blur-sm text-white p-2 text-center text-xs sm:text-sm shadow-lg">
+        Your email is not verified. Please check your inbox.
+        <button onClick={() => onResend(user)} className="font-bold underline ml-2 hover:text-black transition-colors">
+            Resend
         </button>
     </div>
 );
@@ -81,40 +77,25 @@ const AppContent: React.FC = () => {
   const [topicToEdit, setTopicToEdit] = useState<ForumTopic | null>(null);
   const { showToast } = useToast();
   const { t, language } = useTranslation();
-  const headerRef = useRef<HTMLElement>(null);
-  const [headerHeight, setHeaderHeight] = useState(0);
-
+  
   const loading = gamesLoading || settingsLoading || forumLoading || loadingAuth || requestedGamesLoading;
 
   useEffect(() => {
-    if (!headerRef.current) return;
-
-    const resizeObserver = new ResizeObserver(() => {
-      setHeaderHeight(headerRef.current?.offsetHeight ?? 0);
-    });
-
-    resizeObserver.observe(headerRef.current);
-    setHeaderHeight(headerRef.current?.offsetHeight ?? 0); // Initial measurement
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
-
-  useEffect(() => {
-    // This is for the main site theme, not the new admin panel theme
+    // This is for the main site theme
     const rootStyle = document.documentElement.style;
     const colors = themeColorMap[settings.themeColor] || themeColorMap.purple;
     const body = document.querySelector('body');
-    if (body && view.page !== 'admin') {
-       body.style.backgroundColor = '#161022'; // Keep default dark for admin
-       body.classList.add('font-sans');
-       body.classList.remove('font-display');
+    if (body) {
+       // Allow CSS gradients in index.html to take precedence for background
+       // But update CSS variables for primary colors
        rootStyle.setProperty('--color-brand-purple', colors['--color-brand-purple']);
        rootStyle.setProperty('--color-brand-light-purple', colors['--color-brand-light-purple']);
-    } else if (body) {
-       body.style.backgroundColor = '#161022';
-       body.classList.remove('font-sans');
-       body.classList.add('font-display');
+       
+       if (view.page === 'admin') {
+           body.classList.remove('bg-brand-dark'); // Let admin panel handle its own bg
+       } else {
+           body.classList.add('bg-brand-dark');
+       }
     }
   }, [settings.themeColor, view.page]);
 
@@ -131,12 +112,6 @@ const AppContent: React.FC = () => {
       let description = defaultDescription;
       let imageUrl = defaultImage;
       let canonicalUrl = baseUrl;
-      let structuredData: object | null = {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": siteName,
-        "url": canonicalUrl,
-      };
 
       if (view.page === 'game' && view.id) {
         const game = getGameById(view.id);
@@ -145,66 +120,20 @@ const AppContent: React.FC = () => {
           description = game.description?.[language]?.substring(0, 160) || '';
           imageUrl = game.horizontalImageUrl;
           canonicalUrl = `${baseUrl}?page=game&id=${game.id}`;
-          structuredData = {
-            "@context": "https://schema.org",
-            "@type": "VideoGame",
-            "name": game.title?.[language],
-            "description": game.description?.[language],
-            "image": game.horizontalImageUrl,
-            "url": canonicalUrl,
-            "genre": game.genre?.[language],
-            "operatingSystem": game.platform,
-            "datePublished": game.releaseDate,
-            "offers": {
-              "@type": "Offer",
-              "price": game.price,
-              "priceCurrency": "USD"
-            },
-            "publisher": {
-                "@type": "Organization",
-                "name": siteName
-            }
-          };
         }
       } else if (view.page === 'forum') {
         title = `${t('forum.title')} | ${siteName}`;
         description = t('forum.description');
         canonicalUrl = `${baseUrl}?page=forum`;
-      } else if (view.page === 'topic' && view.id) {
-        const topic = getTopicById(view.id);
-        if (topic) {
-          title = `${topic.title?.[language]} | ${t('forum.title')} | ${siteName}`;
-          description = topic.content?.[language]?.substring(0, 160) || '';
-          canonicalUrl = `${baseUrl}?page=topic&id=${topic.id}`;
-        }
       } else if (view.page === 'request') {
           title = `${t('requestGame.title')} | ${siteName}`;
           description = t('requestGame.description');
           canonicalUrl = `${baseUrl}?page=request`;
       }
       
-      // Update DOM
       document.title = title;
       document.querySelector('#meta-description')?.setAttribute('content', description);
       document.querySelector('#canonical-link')?.setAttribute('href', canonicalUrl);
-      
-      // Open Graph
-      document.querySelector('#og-title')?.setAttribute('content', title);
-      document.querySelector('#og-description')?.setAttribute('content', description);
-      document.querySelector('#og-url')?.setAttribute('content', canonicalUrl);
-      document.querySelector('#og-image')?.setAttribute('content', imageUrl);
-      
-      // Twitter Card
-      document.querySelector('#twitter-title')?.setAttribute('content', title);
-      document.querySelector('#twitter-description')?.setAttribute('content', description);
-      document.querySelector('#twitter-url')?.setAttribute('content', canonicalUrl);
-      document.querySelector('#twitter-image')?.setAttribute('content', imageUrl);
-
-      // Structured Data
-      const ldJsonScript = document.getElementById('ld-json-data');
-      if (ldJsonScript) {
-        ldJsonScript.innerHTML = structuredData ? JSON.stringify(structuredData) : '';
-      }
     };
 
     updateMetaTags();
@@ -222,7 +151,10 @@ const AppContent: React.FC = () => {
 
 
   const navigateToHome = () => setView({ page: 'home' });
-  const navigateToGame = (id: string) => setView({ page: 'game', id });
+  const navigateToGame = (id: string) => {
+    window.scrollTo(0,0);
+    setView({ page: 'game', id });
+  };
   const navigateToAdmin = () => {
     if (currentUser?.role === 'admin') {
       setView({ page: 'admin' });
@@ -255,7 +187,7 @@ const AppContent: React.FC = () => {
         showToast(t('toasts.welcomeBack', { username: user.username }), 'success');
         return true;
     }
-    return false; // Error message is shown in modal
+    return false;
   };
 
   const handleSendVerification = (user: User) => {
@@ -305,7 +237,6 @@ const AppContent: React.FC = () => {
         },
       });
     } else {
-      // Show a generic message to prevent user enumeration
       showToast('If an account with that email exists, a reset link has been sent.', 'success');
     }
   };
@@ -364,7 +295,6 @@ const AppContent: React.FC = () => {
       setIsLoginModalOpen(true);
       return;
     }
-    // For simplicity, new topics are created with same content for both languages
     const newTopicData = {
       title: { en: data.title, tr: data.title },
       content: { en: data.content, tr: data.content },
@@ -381,7 +311,6 @@ const AppContent: React.FC = () => {
   };
   
   const handleUpdateTopic = (topicId: string, data: { title: string; content: string }) => {
-    // This updates only the current language's content. A more complex modal would be needed for full multilingual editing.
     const topic = getTopicById(topicId);
     if(!topic) return;
 
@@ -412,7 +341,6 @@ const AppContent: React.FC = () => {
         setIsLoginModalOpen(true);
         return;
     }
-    // Authorization check
     if (topic.authorId !== currentUser.id && currentUser.role !== 'admin') {
         showToast(t('toasts.deleteOwnTopics'), 'error');
         return;
@@ -508,7 +436,6 @@ const AppContent: React.FC = () => {
   
   if (view.page === 'admin') {
      if (currentUser?.role !== 'admin') {
-       // This should be handled by navigateToAdmin, but as a fallback:
        showToast(t('toasts.accessDenied'), 'error');
        navigateToHome();
        return null;
@@ -537,28 +464,28 @@ const AppContent: React.FC = () => {
     const noSearchResults = searchQuery && filteredGames.length === 0;
 
     if (showAllGames && !searchQuery) {
-        return <div className="my-16"><GameSection title={t('header.allGames')} games={allGamesSorted} onGameClick={navigateToGame} /></div>;
+        return <div className="my-12"><GameSection title={t('header.allGames')} games={allGamesSorted} onGameClick={navigateToGame} /></div>;
     }
     if (hasSearchResults) {
-        return <div className="my-16"><GameSection title={t('home.searchResults')} games={filteredGames} onGameClick={navigateToGame} /></div>;
+        return <div className="my-12"><GameSection title={t('home.searchResults')} games={filteredGames} onGameClick={navigateToGame} /></div>;
     }
     if (noSearchResults) {
         return <p className="text-center text-brand-gray text-lg py-16 animate-fadeIn">{t('home.noResults', { query: searchQuery })}</p>;
     }
     return (
-      <>
-        <div className="my-16"><GameSection title={t('home.warGames')} games={savaşOyunları} onGameClick={navigateToGame} /></div>
-        <div className="my-16"><GameSection title={t('home.twoDGames')} games={ikiDOyunlar} onGameClick={navigateToGame} /></div>
-        <div className="my-16"><GameSection title={t('home.carRacing')} games={arabaOyunları} onGameClick={navigateToGame} /></div>
-        <div className="my-16"><GameSection title={t('home.simulation')} games={simulasyonOyunları} onGameClick={navigateToGame} /></div>
-      </>
+      <div className="space-y-24">
+        <GameSection title={t('home.warGames')} games={savaşOyunları} onGameClick={navigateToGame} />
+        <GameSection title={t('home.twoDGames')} games={ikiDOyunlar} onGameClick={navigateToGame} />
+        <GameSection title={t('home.carRacing')} games={arabaOyunları} onGameClick={navigateToGame} />
+        <GameSection title={t('home.simulation')} games={simulasyonOyunları} onGameClick={navigateToGame} />
+      </div>
     );
   };
   
   const renderMainContent = () => {
     if (loading) {
       return (
-        <div className="space-y-16 mt-12">
+        <div className="space-y-16 mt-32 container mx-auto px-4">
           {/* Hero Skeleton */}
           <div className="relative rounded-2xl overflow-hidden h-[500px] bg-brand-dark-2 animate-shimmer"></div>
           {/* Game Section Skeletons */}
@@ -577,11 +504,11 @@ const AppContent: React.FC = () => {
     switch (view.page) {
       case 'game':
         const game = getGameById(view.id || null);
-        if (game) return <GameDetail game={game} onBack={navigateToHome} currentUser={currentUser} onRequestLogin={() => setIsLoginModalOpen(true)} />;
+        if (game) return <div className="mt-32 container mx-auto px-4"><GameDetail game={game} onBack={navigateToHome} currentUser={currentUser} onRequestLogin={() => setIsLoginModalOpen(true)} /></div>;
         navigateToHome();
         return null;
        case 'forum':
-        return <ForumPage 
+        return <div className="mt-32 container mx-auto px-4"><ForumPage 
                   topics={topics} 
                   onTopicClick={navigateToTopic} 
                   onOpenCreateTopic={() => { setTopicToEdit(null); setIsTopicModalOpen(true); }}
@@ -589,10 +516,10 @@ const AppContent: React.FC = () => {
                   onRequestLogin={() => setIsLoginModalOpen(true)}
                   onDeleteTopic={handleDeleteTopic}
                   onEditTopic={handleOpenEditTopicModal}
-                />;
+                /></div>;
       case 'topic':
         const topic = getTopicById(view.id || '');
-        if (topic) return <TopicDetail 
+        if (topic) return <div className="mt-32 container mx-auto px-4"><TopicDetail 
                             topic={topic} 
                             onAddComment={handleAddComment} 
                             onBack={navigateToForum}
@@ -600,25 +527,27 @@ const AppContent: React.FC = () => {
                             onRequestLogin={() => setIsLoginModalOpen(true)}
                             onDeleteTopic={handleDeleteTopic}
                             onEditTopic={handleOpenEditTopicModal}
-                          />;
-        // If topic not found, navigate back to forum list
+                          /></div>;
         navigateToForum();
         return null;
       case 'request':
-        return <RequestGame 
+        return <div className="mt-32 container mx-auto px-4"><RequestGame 
                   onBack={navigateToHome} 
                   currentUser={currentUser}
                   onRequestSubmit={handleRequestGame}
                   requestedGames={userRequestedGames}
                   loading={requestedGamesLoading}
                   onRequestLogin={() => setIsLoginModalOpen(true)}
-                />;
+                /></div>;
       case 'home':
       default:
         return (
           <>
             {settings.showFeaturedSection && <Hero games={featuredGames} onViewGame={navigateToGame} currentUser={currentUser} onRequestLogin={() => setIsLoginModalOpen(true)} />}
-            {renderHomePageContent()}
+            {/* Added proper margin-top to separate Featured and Main Content */}
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-12 relative z-10 pb-12">
+               {renderHomePageContent()}
+            </div>
           </>
         );
     }
@@ -626,21 +555,22 @@ const AppContent: React.FC = () => {
 
   if (settings.maintenanceMode && currentUser?.role !== 'admin') {
     return (
-        <div className="bg-brand-dark-2 text-white min-h-screen font-sans flex flex-col items-center justify-center text-center p-8">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-brand-purple mb-6">
-              <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2ZM11.002 11.002V7.002C11.002 6.449 11.449 6.002 12 6.002C12.553 6.002 13.002 6.449 13.002 7.002V11.002H17.002C17.555 11.002 18.002 11.449 18.002 12C18.002 12.553 17.555 13.002 17.002 13.002H13.002V17.002C13.002 17.555 12.553 18.002 12 18.002C11.449 18.002 11.002 17.555 11.002 17.002V13.002H7.002C6.449 13.002 6.002 12.553 6.002 12C6.002 11.449 6.449 11.002 7.002 11.002H11.002Z" fill="currentColor"/>
-            </svg>
-            <h1 className="text-4xl font-bold mb-4">{settings.siteName[language]} is Under Maintenance</h1>
-            <p className="text-xl text-brand-gray">We are currently performing scheduled maintenance.</p>
-            <p className="text-brand-gray">Please check back later!</p>
+        <div className="bg-brand-dark text-white min-h-screen font-sans flex flex-col items-center justify-center text-center p-8">
+             <div className="p-8 rounded-2xl bg-[#1a102e] border border-white/10 shadow-2xl max-w-lg">
+                <span className="material-symbols-outlined text-6xl text-brand-purple mb-6 animate-bounce">construction</span>
+                <h1 className="text-4xl font-bold mb-4">{settings.siteName[language]} is Under Maintenance</h1>
+                <p className="text-xl text-brand-gray">We are upgrading our systems to provide you with a better experience.</p>
+                <div className="mt-8 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-brand-purple animate-shimmer w-1/2"></div>
+                </div>
+            </div>
         </div>
     );
   }
 
   return (
-    <div className="bg-brand-dark text-white min-h-screen font-sans">
+    <div className="text-white min-h-screen font-sans flex flex-col">
       <Header
-          ref={headerRef} 
           siteName={settings.siteName[language]}
           siteSlogan={settings.siteSlogan[language]}
           onNavigateHome={handleLogoClick}
@@ -656,11 +586,13 @@ const AppContent: React.FC = () => {
           onLogout={handleUserLogout}
         />
         {currentUser && !currentUser.isVerified && <EmailVerificationBanner user={currentUser} onResend={handleSendVerification} />}
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ paddingTop: `${headerHeight}px` }}>
-        <div key={view.page + (view.id || '')} className="page-transition py-12">
+      
+      <main className="flex-grow">
+        <div key={view.page + (view.id || '')} className="page-transition">
           {renderMainContent()}
         </div>
       </main>
+      
       <LoginModal 
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}

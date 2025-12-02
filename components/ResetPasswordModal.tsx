@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { User } from '../types';
 
@@ -55,38 +54,56 @@ const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({ isOpen, onClose
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={handleClose}>
-      <div className="bg-[#1C162D] rounded-xl border border-gray-800 w-full max-w-md" onClick={e => e.stopPropagation()}>
-        <form onSubmit={handleSubmit} className="p-8">
-          <h2 className="text-2xl font-bold mb-2 text-white text-center">Create New Password</h2>
-          <p className="text-brand-gray text-center mb-6">Enter a new password for <span className="font-bold text-white">{userToReset.username}</span>.</p>
-          
-          {error && <div className="bg-red-500/10 text-red-400 text-sm p-3 rounded-lg mb-4 text-center">{error}</div>}
-          {success && <div className="bg-green-500/10 text-green-400 text-sm p-3 rounded-lg mb-4 text-center">{success}</div>}
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={handleClose}>
+      <div className="bg-[#1C162D] rounded-3xl border border-white/10 w-full max-w-md shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Decorative Glow */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 blur-3xl rounded-full pointer-events-none"></div>
 
-          <div className="space-y-4">
-            <input
-              type="password"
-              placeholder="New Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white"
-            />
-            <input
-              type="password"
-              placeholder="Confirm New Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="w-full bg-[#2f2348] rounded-lg p-3 border border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-white"
-            />
+        <form onSubmit={handleSubmit} className="p-8 relative z-10">
+          <div className="text-center mb-8">
+             <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10 backdrop-blur-md shadow-inner">
+                <span className="material-symbols-outlined text-3xl text-green-400">key</span>
+             </div>
+             <h2 className="text-2xl font-black text-white tracking-tight mb-2">New Password</h2>
+             <p className="text-brand-gray text-sm">Create a strong password for <span className="text-white font-bold">@{userToReset.username}</span>.</p>
           </div>
           
-          <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-800">
-            <button type="button" onClick={handleClose} className="text-gray-300 font-bold py-2 px-4 rounded-lg transition-colors hover:bg-gray-700">Close</button>
-            <button type="submit" className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-6 rounded-lg transition-colors disabled:opacity-50" disabled={loading || !!success}>
-              {loading ? 'Saving...' : 'Set New Password'}
+          {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-4 rounded-xl mb-6 text-center">{error}</div>}
+          {success && <div className="bg-green-500/10 border border-green-500/20 text-green-400 text-sm p-4 rounded-xl mb-6 text-center">{success}</div>}
+
+          <div className="space-y-4">
+            <div className="relative">
+                <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full bg-[#0f0720] rounded-xl p-4 pl-12 border border-white/10 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-white transition-all placeholder:text-gray-600"
+                    placeholder="New Password"
+                />
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">lock</span>
+            </div>
+            <div className="relative">
+                <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="w-full bg-[#0f0720] rounded-xl p-4 pl-12 border border-white/10 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-white transition-all placeholder:text-gray-600"
+                    placeholder="Confirm Password"
+                />
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">lock_clock</span>
+            </div>
+          </div>
+          
+          <div className="flex gap-3 mt-8">
+             <button type="button" onClick={handleClose} className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 font-bold py-4 rounded-xl transition-colors">Close</button>
+             <button 
+                type="submit" 
+                className="flex-[2] bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-600/20 disabled:opacity-50" 
+                disabled={loading || !!success}
+            >
+              {loading ? 'Saving...' : 'Set Password'}
             </button>
           </div>
         </form>
