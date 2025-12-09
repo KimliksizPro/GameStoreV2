@@ -1,3 +1,4 @@
+
 import React, { useState, forwardRef, useRef, useEffect } from 'react';
 import { User } from '../types';
 import { useTranslation, Language } from '../hooks/useTranslation';
@@ -30,8 +31,7 @@ interface HeaderProps {
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     currentUser: User | null;
-    onLoginClick: () => void;
-    onSignupClick: () => void;
+    onProfileClick: () => void;
     onLogout: () => void;
 }
 
@@ -94,12 +94,12 @@ const UserMenu: React.FC<{ user: User; onLogout: () => void }> = ({ user, onLogo
             {isOpen && (
                 <div className="absolute right-0 mt-3 w-48 bg-[#1a102e] rounded-xl shadow-2xl border border-white/10 py-2 animate-fadeIn origin-top-right backdrop-blur-xl">
                     <div className="px-4 py-3 border-b border-white/5">
-                        <p className="text-xs text-brand-gray uppercase tracking-wider">Signed in as</p>
+                        <p className="text-xs text-brand-gray uppercase tracking-wider">Profile</p>
                         <p className="text-sm font-bold text-white truncate mt-1">{user.username}</p>
                     </div>
                     <button onClick={(e) => { onLogout(); setIsOpen(false); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-brand-gray hover:bg-white/5 hover:text-white transition-colors text-left">
                         <span className="material-symbols-outlined text-lg">logout</span>
-                        {t('header.logout')}
+                        Reset Profile
                     </button>
                 </div>
             )}
@@ -160,8 +160,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     onNavigateForum, 
     onClose,
     currentUser,
-    onLoginClick,
-    onSignupClick,
+    onProfileClick,
     onLogout
 }) => {
     const { t } = useTranslation();
@@ -180,19 +179,16 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 <button onClick={() => handleNavigation(onNavigateForum)} className="text-2xl font-bold text-white hover:text-brand-purple transition-colors">{t('header.forum')}</button>
                 <div className="w-full h-px bg-white/10 my-4"></div>
                 {currentUser ? (
-                     <ActionButton onClick={() => handleNavigation(onLogout)}>{t('header.logout')}</ActionButton>
+                     <ActionButton onClick={() => handleNavigation(onLogout)}>Reset Profile</ActionButton>
                 ) : (
-                    <div className="flex flex-col gap-4">
-                        <ActionButton onClick={() => handleNavigation(onLoginClick)} variant="secondary">{t('header.login')}</ActionButton>
-                        <ActionButton onClick={() => handleNavigation(onSignupClick)} variant="primary">{t('header.signup')}</ActionButton>
-                    </div>
+                    <ActionButton onClick={() => handleNavigation(onProfileClick)} variant="primary">Create Profile</ActionButton>
                 )}
             </nav>
         </div>
     );
 };
 
-const Header = forwardRef<HTMLElement, HeaderProps>(({ siteName, siteSlogan, onNavigateHome, onNavigateAdmin, onShowAllGames, onNavigateRequestGame, onNavigateForum, searchQuery, setSearchQuery, currentUser, onLoginClick, onSignupClick, onLogout }, ref) => {
+const Header = forwardRef<HTMLElement, HeaderProps>(({ siteName, siteSlogan, onNavigateHome, onNavigateAdmin, onShowAllGames, onNavigateRequestGame, onNavigateForum, searchQuery, setSearchQuery, currentUser, onProfileClick, onLogout }, ref) => {
     const { t } = useTranslation();
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -267,8 +263,7 @@ const Header = forwardRef<HTMLElement, HeaderProps>(({ siteName, siteSlogan, onN
                                 <UserMenu user={currentUser} onLogout={onLogout} />
                             ) : (
                                 <div className="hidden sm:flex items-center gap-3">
-                                    <button onClick={onLoginClick} className="text-sm font-bold text-white hover:text-brand-purple transition-colors">{t('header.login')}</button>
-                                    <ActionButton onClick={onSignupClick} variant="primary">{t('header.signup')}</ActionButton>
+                                    <ActionButton onClick={onProfileClick} variant="primary">Create Profile</ActionButton>
                                 </div>
                             )}
                             
@@ -282,7 +277,7 @@ const Header = forwardRef<HTMLElement, HeaderProps>(({ siteName, siteSlogan, onN
                 </div>
             </header>
             {isMobileMenuOpen && (
-                <MobileMenu {...{ onShowAllGames, onNavigateRequestGame, onNavigateForum, onNavigateAdmin, currentUser, onLoginClick, onSignupClick, onLogout }} onClose={() => setIsMobileMenuOpen(false)} />
+                <MobileMenu {...{ onShowAllGames, onNavigateRequestGame, onNavigateForum, onNavigateAdmin, currentUser, onProfileClick, onLogout }} onClose={() => setIsMobileMenuOpen(false)} />
             )}
         </>
     );

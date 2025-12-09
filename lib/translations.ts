@@ -1,4 +1,5 @@
 
+
 // lib/translations.ts
 
 export const translations = {
@@ -142,6 +143,7 @@ export const translations = {
       searchResults: 'Search Results',
       noResults: 'No games found for "{query}"',
       warGames: 'War Games',
+      sports: 'Sports Games',
       twoDGames: '2D Games',
       carRacing: 'Car Racing',
       simulation: 'Simulation',
@@ -287,6 +289,7 @@ export const translations = {
       searchResults: 'Arama Sonuçları',
       noResults: '"{query}" için oyun bulunamadı',
       warGames: 'Savaş Oyunları',
+      sports: 'Spor Oyunları',
       twoDGames: '2D Oyunlar',
       carRacing: 'Araba Yarışı',
       simulation: 'Simülasyon',

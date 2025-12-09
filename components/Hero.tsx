@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Game, User } from '../types';
 import { useTranslation } from '../hooks/useTranslation';

@@ -3,59 +3,39 @@ import { useState, useEffect, useCallback } from 'react';
 import { ForumTopic, ForumComment, LocalizedString } from '../types';
 import { initialTopics } from '../data/forum';
 
-const API_ENDPOINT = 'https://api.npoint.io/ca11c27cf089a13efc29';
+const FORUM_STORAGE_KEY = 'game_store_forum_data';
 
 export const useForum = () => {
   const [topics, setTopics] = useState<ForumTopic[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch initial data from the remote JSON store
-  const fetchTopics = useCallback(async () => {
-      try {
-        const response = await fetch(API_ENDPOINT);
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        // npoint can return an empty object if the bin is empty, handle this case
-        if (Array.isArray(data) && data.length > 0) {
-           setTopics(data);
-        } else {
-           console.warn("Fetched data is not an array or is empty, falling back to initial data.");
-           setTopics(initialTopics);
-           // Initialize remote with initial data if it's empty
-           await updateRemoteTopics(initialTopics);
-        }
-      } catch (error) {
-        console.error('Failed to fetch topics, falling back to initial data:', error);
-        setTopics(initialTopics);
-      } finally {
-        setLoading(false);
-      }
-    }, []);
-
+  // Load topics from LocalStorage on mount
   useEffect(() => {
-    fetchTopics();
-  }, [fetchTopics]);
-
-  // Function to update the remote JSON store
-  const updateRemoteTopics = useCallback(async (updatedTopics: ForumTopic[]) => {
     try {
-      const response = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedTopics),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to update topics on the server.');
+      const storedTopics = localStorage.getItem(FORUM_STORAGE_KEY);
+      if (storedTopics) {
+        setTopics(JSON.parse(storedTopics));
+      } else {
+        // If no data found, initialize with default data
+        setTopics(initialTopics);
+        localStorage.setItem(FORUM_STORAGE_KEY, JSON.stringify(initialTopics));
       }
     } catch (error) {
-      console.error('Error updating remote topics:', error);
-      throw error; // Re-throw error to be caught by the caller
+      console.error('Failed to load forum topics from storage:', error);
+      setTopics(initialTopics);
+    } finally {
+      setLoading(false);
     }
   }, []);
+
+  // Helper to save to LocalStorage
+  const saveToStorage = (updatedTopics: ForumTopic[]) => {
+    try {
+      localStorage.setItem(FORUM_STORAGE_KEY, JSON.stringify(updatedTopics));
+    } catch (error) {
+      console.error('Failed to save forum topics to storage:', error);
+    }
+  };
 
   const addTopic = (topicData: Omit<ForumTopic, 'id' | 'comments' | 'createdAt'>): string => {
     const newTopic: ForumTopic = {
@@ -66,12 +46,12 @@ export const useForum = () => {
     };
     
     const updatedTopics = [newTopic, ...topics];
-    setTopics(updatedTopics); // Optimistic update
-    updateRemoteTopics(updatedTopics); // Push to remote
+    setTopics(updatedTopics);
+    saveToStorage(updatedTopics);
     return newTopic.id;
   };
 
-  const updateTopic = async (topicId: string, data: { title: LocalizedString; content: LocalizedString }) => {
+  const updateTopic = (topicId: string, data: { title: LocalizedString; content: LocalizedString }) => {
     const updatedTopics = topics.map(topic => {
       if (topic.id === topicId) {
         return { ...topic, title: data.title, content: data.content };
@@ -79,7 +59,7 @@ export const useForum = () => {
       return topic;
     });
     setTopics(updatedTopics);
-    await updateRemoteTopics(updatedTopics);
+    saveToStorage(updatedTopics);
   };
 
   const addComment = (topicId: string, commentData: Omit<ForumComment, 'id' | 'createdAt'>) => {
@@ -100,15 +80,15 @@ export const useForum = () => {
       return topic;
     });
 
-    setTopics(updatedTopics); // Optimistic update
-    updateRemoteTopics(updatedTopics); // Push to remote
+    setTopics(updatedTopics);
+    saveToStorage(updatedTopics);
   };
 
-  const deleteTopic = useCallback(async (topicId: string) => {
+  const deleteTopic = async (topicId: string) => {
     const updatedTopics = topics.filter(topic => topic.id !== topicId);
-    setTopics(updatedTopics); // Optimistic update
-    await updateRemoteTopics(updatedTopics);
-  }, [topics, updateRemoteTopics]);
+    setTopics(updatedTopics);
+    saveToStorage(updatedTopics);
+  };
   
   const getTopicById = (topicId: string): ForumTopic | undefined => {
     return topics.find(topic => topic.id === topicId);

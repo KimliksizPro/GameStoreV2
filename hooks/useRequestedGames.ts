@@ -2,55 +2,40 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RequestedGame, User } from '../types';
 
-const REQUESTED_GAMES_API = 'https://api.npoint.io/bc06a4a34d18b00f4e5e';
+const REQUESTS_STORAGE_KEY = 'game_store_requests_data';
 
 export const useRequestedGames = () => {
   const [requestedGames, setRequestedGames] = useState<RequestedGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRequestedGames = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
     try {
-      const response = await fetch(REQUESTED_GAMES_API);
-      if (!response.ok) {
-        throw new Error('Failed to fetch requested games.');
-      }
-      const data = await response.json();
-      // npoint returns {} for an empty bin, so handle that
-      if (Array.isArray(data)) {
-        setRequestedGames(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      const storedRequests = localStorage.getItem(REQUESTS_STORAGE_KEY);
+      if (storedRequests) {
+        setRequestedGames(JSON.parse(storedRequests));
       } else {
         setRequestedGames([]);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'An unknown error occurred.');
-      setRequestedGames([]); // Fallback to empty on error
+      console.error('Failed to load requested games from storage:', e);
+      setError('Failed to load data.');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchRequestedGames();
-  }, [fetchRequestedGames]);
-
-  const updateRemoteRequestedGames = useCallback(async (updatedGames: RequestedGame[]): Promise<boolean> => {
+  const saveToStorage = (games: RequestedGame[]) => {
     try {
-      const response = await fetch(REQUESTED_GAMES_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedGames),
-      });
-      return response.ok;
+      localStorage.setItem(REQUESTS_STORAGE_KEY, JSON.stringify(games));
+      return true;
     } catch (e) {
-      console.error('Failed to update remote requested games:', e);
+      console.error('Failed to save requested games to storage:', e);
       return false;
     }
-  }, []);
+  };
 
-  const addRequestedGame = useCallback(async (gameData: { gameTitle: string; reason: string }, user: User): Promise<{ success: boolean }> => {
+  const addRequestedGame = async (gameData: { gameTitle: string; reason: string }, user: User): Promise<{ success: boolean }> => {
     const newRequest: RequestedGame = {
       id: Date.now().toString(),
       gameTitle: gameData.gameTitle,
@@ -62,36 +47,18 @@ export const useRequestedGames = () => {
     };
 
     const updatedGames = [newRequest, ...requestedGames];
-    
-    // Optimistic update
     setRequestedGames(updatedGames);
-    const success = await updateRemoteRequestedGames(updatedGames);
+    const success = saveToStorage(updatedGames);
 
-    if (!success) {
-      // Revert on failure
-      setRequestedGames(requestedGames);
-      return { success: false };
-    }
-    return { success: true };
-  }, [requestedGames, updateRemoteRequestedGames]);
+    return { success };
+  };
 
-  const deleteRequestedGame = useCallback(async (requestId: string): Promise<{ success: boolean }> => {
-    const originalGames = [...requestedGames];
+  const deleteRequestedGame = async (requestId: string): Promise<{ success: boolean }> => {
     const updatedGames = requestedGames.filter(req => req.id !== requestId);
-    
-    setRequestedGames(updatedGames); // Optimistic update
-
-    const success = await updateRemoteRequestedGames(updatedGames);
-
-    if (!success) {
-      // Revert on failure
-      setRequestedGames(originalGames);
-      return { success: false };
-    }
-
-    return { success: true };
-  }, [requestedGames, updateRemoteRequestedGames]);
-
+    setRequestedGames(updatedGames);
+    const success = saveToStorage(updatedGames);
+    return { success };
+  };
 
   return { requestedGames, loading, error, addRequestedGame, deleteRequestedGame };
 };

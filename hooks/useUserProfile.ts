@@ -11,6 +11,7 @@ const PROFILE_STORAGE_KEY = 'game_store_user_profile';
 
 export const useUserProfile = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     try {
@@ -20,6 +21,8 @@ export const useUserProfile = () => {
       }
     } catch (error) {
         console.error("Failed to load user profile from storage", error);
+    } finally {
+        setLoading(false);
     }
   }, []);
 
@@ -33,14 +36,15 @@ export const useUserProfile = () => {
     }
   }, []);
   
-  const defaultProfile: UserProfile = {
-      name: 'Guest Player',
-      avatarUrl: availableAvatars[0],
-  };
+  const logout = useCallback(() => {
+      setProfile(null);
+      localStorage.removeItem(PROFILE_STORAGE_KEY);
+  }, []);
 
   return {
-    profile: profile || defaultProfile,
-    isProfileSet: !!profile,
+    profile,
+    loading,
     saveProfile,
+    logout
   };
 };

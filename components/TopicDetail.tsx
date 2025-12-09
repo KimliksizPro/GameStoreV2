@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ForumTopic, ForumComment, User } from '../types';
 import { formatDistanceToNow } from 'date-fns';
@@ -180,7 +181,7 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topic, onAddComment, onBack, 
                         <textarea
                           value={newComment}
                           onChange={(e) => setNewComment(e.target.value)}
-                          placeholder={currentUser ? t('topic.joinDiscussion') : t('topic.loginToComment')}
+                          placeholder={currentUser ? t('topic.joinDiscussion') : 'Create a profile to comment...'}
                           required
                           rows={2}
                           className="w-full bg-[#0f0720] rounded-xl p-4 border border-gray-700 focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all text-white resize-none"

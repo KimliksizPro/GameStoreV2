@@ -162,16 +162,15 @@ const RequestGame: React.FC<RequestGameProps> = ({ onBack, currentUser, onReques
                                 <button
                                     type="submit"
                                     className="w-full bg-gradient-to-r from-brand-purple to-violet-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-brand-purple/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                    disabled={!currentUser}
-                                    title={!currentUser ? t('toasts.loginToRequest') : t('requestGame.sendRequest')}
+                                    title={!currentUser ? 'Create profile to request' : t('requestGame.sendRequest')}
                                 >
-                                    <span>{currentUser ? t('requestGame.sendRequest') : t('requestGame.loginToRequest')}</span>
+                                    <span>{currentUser ? t('requestGame.sendRequest') : 'Create Profile to Request'}</span>
                                     {currentUser && <span className="material-symbols-outlined text-[20px]">send</span>}
                                 </button>
                                 
                                 {!currentUser && (
                                     <p className="text-center text-xs text-brand-gray">
-                                        You need to <button onClick={onRequestLogin} className="text-brand-light-purple hover:underline font-bold">log in</button> to submit a request.
+                                        You need to <button onClick={onRequestLogin} className="text-brand-light-purple hover:underline font-bold">create a profile</button> to submit a request.
                                     </p>
                                 )}
                             </form>

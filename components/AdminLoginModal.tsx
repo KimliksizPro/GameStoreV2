@@ -1,0 +1,108 @@
+
+import React, { useState } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
+
+interface AdminLoginModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onLogin: (username: string) => void;
+}
+
+const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClose, onLogin }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const { t } = useTranslation();
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    const validUsernames = ['semih', 'admin'];
+    const correctPassword = 'semih1828';
+
+    if (validUsernames.includes(username.toLowerCase()) && password === correctPassword) {
+        onLogin(username);
+        handleClose();
+    } else {
+        setError('Invalid username or password.');
+    }
+  };
+  
+  const handleClose = () => {
+      setUsername('');
+      setPassword('');
+      setError('');
+      onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={handleClose}>
+      <div className="bg-[#1C162D] rounded-3xl border border-white/10 w-full max-w-md shadow-2xl relative overflow-hidden group" onClick={e => e.stopPropagation()}>
+        
+        {/* Decorative Glow */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/20 blur-3xl rounded-full pointer-events-none group-hover:bg-red-500/30 transition-colors duration-500"></div>
+
+        <form onSubmit={handleSubmit} className="p-8 relative z-10">
+          <div className="text-center mb-8">
+             <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10 backdrop-blur-md shadow-inner">
+                <span className="material-symbols-outlined text-3xl text-red-500">security</span>
+             </div>
+             <h2 className="text-3xl font-black text-white tracking-tight mb-2">Admin Access</h2>
+             <p className="text-brand-gray text-sm">Authorized personnel only.</p>
+          </div>
+          
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-4 rounded-xl mb-6 text-center flex items-center justify-center gap-2">
+              <span className="material-symbols-outlined text-lg">error</span>
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-5">
+            <div>
+                 <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider ml-1">Username</label>
+                 <div className="relative">
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                      className="w-full bg-[#0f0720] rounded-xl p-4 pl-12 border border-white/10 focus:ring-2 focus:ring-red-500 focus:border-red-500 text-white transition-all placeholder:text-gray-600"
+                      placeholder="Semih or Admin"
+                    />
+                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">person</span>
+                 </div>
+            </div>
+
+            <div>
+                 <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider ml-1">Password</label>
+                 <div className="relative">
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="w-full bg-[#0f0720] rounded-xl p-4 pl-12 border border-white/10 focus:ring-2 focus:ring-red-500 focus:border-red-500 text-white transition-all placeholder:text-gray-600"
+                        placeholder="••••••••"
+                    />
+                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">lock</span>
+                 </div>
+            </div>
+          </div>
+          
+          <button 
+            type="submit" 
+            className="w-full mt-8 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-red-600/25 transform hover:scale-[1.02]"
+          >
+            Authenticate
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default AdminLoginModal;

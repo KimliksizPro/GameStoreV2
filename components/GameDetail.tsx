@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Game, User } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
@@ -214,7 +215,7 @@ const GameDetail: React.FC<GameDetailProps> = ({ game, onBack, currentUser, onRe
                         
                         {!currentUser && (
                             <p className="text-center text-xs text-brand-gray mt-3">
-                                {t('hero.loginToDownload')}
+                                Create a profile to download games.
                             </p>
                         )}
                     </div>

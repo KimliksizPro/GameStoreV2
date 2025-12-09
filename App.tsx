@@ -1,4 +1,7 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+
+
+
+import React, { useState, useMemo, useEffect } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import GameSection from './components/GameSection';
@@ -10,20 +13,18 @@ import BackToTopButton from './components/BackToTopButton';
 import GameCardSkeleton from './components/GameCardSkeleton';
 import ForumPage from './components/ForumPage';
 import TopicDetail from './components/TopicDetail';
-import LoginModal from './components/LoginModal';
-import SignupModal from './components/SignupModal';
 import TopicModal from './components/TopicModal';
-import ForgotPasswordModal from './components/ForgotPasswordModal';
-import ResetPasswordModal from './components/ResetPasswordModal';
+import UserProfileModal from './components/UserProfileModal'; 
+import AdminLoginModal from './components/AdminLoginModal'; // New Import
 import { useGames } from './hooks/useGames';
 import { useSiteSettings, SiteSettings } from './hooks/useSiteSettings';
 import { useForum } from './hooks/useForum';
-import { useAuth } from './hooks/useAuth';
+import { useUserProfile } from './hooks/useUserProfile';
 import { useRequestedGames } from './hooks/useRequestedGames';
 import { ToastProvider, useToast } from './hooks/useToast';
 import { LanguageProvider, useTranslation } from './hooks/useTranslation';
 import ToastContainer from './components/ToastContainer';
-import { Game, ForumTopic, ForumComment, User, RequestedGame } from './types';
+import { Game, ForumTopic, ForumComment, User } from './types';
 
 
 type View = {
@@ -33,7 +34,7 @@ type View = {
 
 const themeColorMap = {
     purple: {
-      '--color-brand-purple': '124 58 237', // Updated to match new vibrant purple
+      '--color-brand-purple': '124 58 237',
       '--color-brand-light-purple': '167 139 250',
     },
     blue: {
@@ -46,53 +47,70 @@ const themeColorMap = {
     },
 };
 
-const EmailVerificationBanner: React.FC<{ user: User, onResend: (user: User) => void }> = ({ user, onResend }) => (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-500/90 backdrop-blur-sm text-white p-2 text-center text-xs sm:text-sm shadow-lg">
-        Your email is not verified. Please check your inbox.
-        <button onClick={() => onResend(user)} className="font-bold underline ml-2 hover:text-black transition-colors">
-            Resend
-        </button>
-    </div>
-);
-
-
 const AppContent: React.FC = () => {
   const { games, loading: gamesLoading, addGame, updateGame, deleteGame, getGameById } = useGames();
   const { settings, loading: settingsLoading, updateSettings } = useSiteSettings();
   const { topics, loading: forumLoading, getTopicById, addTopic, updateTopic, addComment, deleteTopic } = useForum();
-  const { currentUser, users, login, signup, logout, loadingAuth, updateUser, deleteUser, addUserByAdmin, verifyUser, findUserByEmail, resetPassword } = useAuth();
+  
+  const { profile, loading: profileLoading, saveProfile, logout } = useUserProfile();
+  
   const { requestedGames, loading: requestedGamesLoading, addRequestedGame, deleteRequestedGame } = useRequestedGames();
   const [view, setView] = useState<View>({ page: 'home', id: null });
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllGames, setShowAllGames] = useState(false);
   
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
-  const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = useState(false);
-  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
-  const [userToResetPassword, setUserToResetPassword] = useState<User | null>(null);
-
+  const [isUserProfileModalOpen, setIsUserProfileModalOpen] = useState(false);
+  const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false); // Admin Modal State
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false); // Auth State
 
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [topicToEdit, setTopicToEdit] = useState<ForumTopic | null>(null);
   const { showToast } = useToast();
   const { t, language } = useTranslation();
   
-  const loading = gamesLoading || settingsLoading || forumLoading || loadingAuth || requestedGamesLoading;
+  const loading = gamesLoading || settingsLoading || forumLoading || requestedGamesLoading || profileLoading;
+
+  // Check if session storage has admin auth on load (optional persistence)
+  useEffect(() => {
+      const adminSession = sessionStorage.getItem('admin_auth_session');
+      if (adminSession === 'true') {
+          setIsAdminAuthenticated(true);
+      }
+  }, []);
+
+  // Construct a User object from the simple profile
+  const currentUser: User | null = useMemo(() => {
+    if (!profile) return null;
+    
+    // Role is only 'admin' if the name matches AND they have passed the password check
+    const isNameAdmin = profile.name.toLowerCase() === 'admin' || profile.name.toLowerCase() === 'semih';
+    const role = (isNameAdmin && isAdminAuthenticated) ? 'admin' : 'user';
+
+    return {
+        id: profile.name.toLowerCase().replace(/\s+/g, '_'),
+        username: profile.name,
+        email: 'local@user.com', 
+        password: '', 
+        avatarUrl: profile.avatarUrl,
+        role: role,
+        isVerified: true
+    };
+  }, [profile, isAdminAuthenticated]);
+
+  const users: User[] = useMemo(() => {
+      return currentUser ? [currentUser] : [];
+  }, [currentUser]);
 
   useEffect(() => {
-    // This is for the main site theme
     const rootStyle = document.documentElement.style;
     const colors = themeColorMap[settings.themeColor] || themeColorMap.purple;
     const body = document.querySelector('body');
     if (body) {
-       // Allow CSS gradients in index.html to take precedence for background
-       // But update CSS variables for primary colors
        rootStyle.setProperty('--color-brand-purple', colors['--color-brand-purple']);
        rootStyle.setProperty('--color-brand-light-purple', colors['--color-brand-light-purple']);
        
        if (view.page === 'admin') {
-           body.classList.remove('bg-brand-dark'); // Let admin panel handle its own bg
+           body.classList.remove('bg-brand-dark');
        } else {
            body.classList.add('bg-brand-dark');
        }
@@ -100,17 +118,14 @@ const AppContent: React.FC = () => {
   }, [settings.themeColor, view.page]);
 
   useEffect(() => {
-    // SEO and Metadata Management
     const updateMetaTags = () => {
       const siteName = settings.siteName[language];
       const baseUrl = window.location.origin + window.location.pathname;
       const defaultDescription = t('footer.copyright', { siteName });
       const defaultTitle = `${siteName} - ${settings.siteSlogan[language]}`;
-      const defaultImage = 'https://images.weserv.nl/?url=https://wallpapercave.com/wp/NjGW245.jpg';
-
+      
       let title = defaultTitle;
       let description = defaultDescription;
-      let imageUrl = defaultImage;
       let canonicalUrl = baseUrl;
 
       if (view.page === 'game' && view.id) {
@@ -118,7 +133,6 @@ const AppContent: React.FC = () => {
         if (game) {
           title = `${game.title?.[language]} | ${siteName}`;
           description = game.description?.[language]?.substring(0, 160) || '';
-          imageUrl = game.horizontalImageUrl;
           canonicalUrl = `${baseUrl}?page=game&id=${game.id}`;
         }
       } else if (view.page === 'forum') {
@@ -155,16 +169,31 @@ const AppContent: React.FC = () => {
     window.scrollTo(0,0);
     setView({ page: 'game', id });
   };
+  
   const navigateToAdmin = () => {
     if (currentUser?.role === 'admin') {
+      // Already authenticated
       setView({ page: 'admin' });
-    } else if (!currentUser) {
-      showToast(t('toasts.loginRequired'), 'error');
-      setIsLoginModalOpen(true);
     } else {
-      showToast(t('toasts.permissionDenied'), 'error');
+      // Open Login Modal
+      setIsAdminLoginModalOpen(true);
     }
   };
+  
+  const handleAdminLoginSuccess = (username: string) => {
+      // 1. Set Auth State
+      setIsAdminAuthenticated(true);
+      sessionStorage.setItem('admin_auth_session', 'true');
+
+      // 2. Ensure Profile is set to the admin name (if not already)
+      // This is crucial because currentUser derives from profile
+      saveProfile(username, 'https://cdn-icons-png.flaticon.com/512/9322/9322127.png'); // Admin Avatar
+
+      // 3. Navigate
+      showToast(`Welcome back, Commander ${username}.`, 'success');
+      setView({ page: 'admin' });
+  };
+
   const navigateToRequestGame = () => setView({ page: 'request' });
   const navigateToForum = () => setView({ page: 'forum' });
   const navigateToTopic = (id: string) => setView({ page: 'topic', id });
@@ -181,76 +210,26 @@ const AppContent: React.FC = () => {
     navigateToHome();
   };
 
-  const handleUserLogin = (username: string, password: string):boolean => {
-    const user = login(username, password);
-    if(user) {
-        showToast(t('toasts.welcomeBack', { username: user.username }), 'success');
-        return true;
-    }
-    return false;
-  };
-
-  const handleSendVerification = (user: User) => {
-    const message = `Verification email sent to ${user.email}. Click to verify. (DEMO)`;
-    showToast(message, 'info', {
-      onClick: async () => {
-        const success = await verifyUser(user.id);
-        if (success) {
-          showToast('Email verified successfully!', 'success');
-        } else {
-          showToast('Failed to verify email.', 'error');
-        }
-      },
-    });
-  };
-
-  const handleUserSignup = async (username: string, email: string, password: string, avatarUrl: string) => {
-    const result = await signup(username, email, password, avatarUrl);
-    if (result.success && result.user) {
-      showToast(result.message, 'success');
-      handleSendVerification(result.user);
-    } else {
-      showToast(result.message, 'error');
-    }
-    return result;
+  const handleSaveProfile = (name: string, avatarUrl: string) => {
+      if (name.toLowerCase() === 'admin' || name.toLowerCase() === 'semih') {
+          showToast('These names are reserved. Please use the Admin Panel button to log in.', 'error');
+          return;
+      }
+      saveProfile(name, avatarUrl);
+      showToast(`Welcome, ${name}!`, 'success');
   };
 
   const handleUserLogout = () => {
     const wasAdmin = currentUser?.role === 'admin';
     logout();
+    setIsAdminAuthenticated(false);
+    sessionStorage.removeItem('admin_auth_session');
+    
     if (wasAdmin && view.page === 'admin') {
       navigateToHome();
     }
-    showToast(t('toasts.loggedOut'), 'info');
+    showToast('Logged out successfully.', 'info');
   };
-  
-  const handleRequestPasswordReset = (email: string) => {
-    const user = findUserByEmail(email);
-    if (user) {
-      const userForReset = user;
-      const message = `Password reset for ${email}. Click to reset. (DEMO)`;
-      showToast(message, 'info', {
-        onClick: () => {
-          setIsForgotPasswordModalOpen(false);
-          setUserToResetPassword(userForReset);
-          setIsResetPasswordModalOpen(true);
-        },
-      });
-    } else {
-      showToast('If an account with that email exists, a reset link has been sent.', 'success');
-    }
-  };
-
-  const handlePasswordReset = async (userId: string, newPassword: string) => {
-    const result = await resetPassword(userId, newPassword);
-    showToast(result.message, result.success ? 'success' : 'error');
-    if (result.success) {
-      setIsResetPasswordModalOpen(false);
-      setUserToResetPassword(null);
-    }
-    return result;
-  };
-
 
   const handleAddGame = (game: Omit<Game, 'id'>) => {
     addGame(game);
@@ -279,7 +258,7 @@ const AppContent: React.FC = () => {
   
   const handleOpenEditTopicModal = (topic: ForumTopic) => {
      if (!currentUser) {
-        setIsLoginModalOpen(true);
+        setIsUserProfileModalOpen(true);
         return;
     }
     if (topic.authorId !== currentUser.id && currentUser.role !== 'admin') {
@@ -292,7 +271,7 @@ const AppContent: React.FC = () => {
 
   const handleAddTopic = (data: { title: string; content: string }) => {
     if (!currentUser) {
-      setIsLoginModalOpen(true);
+      setIsUserProfileModalOpen(true);
       return;
     }
     const newTopicData = {
@@ -338,7 +317,7 @@ const AppContent: React.FC = () => {
     }
     if (!currentUser) {
         showToast(t('toasts.loginToDelete'), 'error');
-        setIsLoginModalOpen(true);
+        setIsUserProfileModalOpen(true);
         return;
     }
     if (topic.authorId !== currentUser.id && currentUser.role !== 'admin') {
@@ -361,8 +340,8 @@ const AppContent: React.FC = () => {
   
   const handleRequestGame = async (data: { gameTitle: string; reason: string }) => {
     if (!currentUser) {
-      showToast(t('toasts.loginToRequest'), 'error');
-      setIsLoginModalOpen(true);
+      showToast('Please create a profile to request games.', 'error');
+      setIsUserProfileModalOpen(true);
       return;
     }
     const result = await addRequestedGame(data, currentUser);
@@ -382,38 +361,17 @@ const AppContent: React.FC = () => {
     }
   };
 
-
-  const handleAddUser = async (newUserData: Omit<User, 'id'>) => {
-    const result = await addUserByAdmin(newUserData);
-    showToast(result.message, result.success ? 'success' : 'error');
-    return result;
-  };
-
-  const handleUpdateUser = (updatedUser: User) => {
-    updateUser(updatedUser).then(success => {
-      if (success) {
-        showToast(`User "${updatedUser.username}" updated successfully.`, 'success');
-      } else {
-        showToast('Failed to update user.', 'error');
-      }
-    });
-  };
-
-  const handleDeleteUser = (userId: string) => {
-    deleteUser(userId).then(success => {
-      if (success) {
-        showToast('User deleted successfully.', 'success');
-      } else {
-        showToast('Failed to delete user.', 'error');
-      }
-    });
-  };
+  // Mock functions for Admin user management (since we are local now)
+  const handleAddUser = async (newUserData: Omit<User, 'id'>) => { return { success: true, message: 'Local mode: User simulation.' }; };
+  const handleUpdateUser = (updatedUser: User) => { showToast('Local mode: User updated.', 'success'); };
+  const handleDeleteUser = (userId: string) => { showToast('Local mode: User deleted.', 'success'); };
 
   const featuredGames = useMemo(() => games.filter(g => g.featured), [games]);
   
   const allGamesSorted = useMemo(() => [...games].sort((a, b) => a.title?.[language]?.localeCompare(b.title?.[language] || '') || 0), [games, language]);
   
   const savaşOyunları = useMemo(() => games.filter(g => g.category?.en === 'War Games'), [games]);
+  const sporOyunları = useMemo(() => games.filter(g => g.category?.en === 'Sports'), [games]);
   const ikiDOyunlar = useMemo(() => games.filter(g => g.category?.en === '2D Games'), [games]);
   const arabaOyunları = useMemo(() => games.filter(g => g.category?.en === 'Car Racing'), [games]);
   const simulasyonOyunları = useMemo(() => games.filter(g => g.category?.en === 'Simulation'), [games]);
@@ -475,6 +433,7 @@ const AppContent: React.FC = () => {
     return (
       <div className="space-y-24">
         <GameSection title={t('home.warGames')} games={savaşOyunları} onGameClick={navigateToGame} />
+        <GameSection title={t('home.sports')} games={sporOyunları} onGameClick={navigateToGame} />
         <GameSection title={t('home.twoDGames')} games={ikiDOyunlar} onGameClick={navigateToGame} />
         <GameSection title={t('home.carRacing')} games={arabaOyunları} onGameClick={navigateToGame} />
         <GameSection title={t('home.simulation')} games={simulasyonOyunları} onGameClick={navigateToGame} />
@@ -486,9 +445,7 @@ const AppContent: React.FC = () => {
     if (loading) {
       return (
         <div className="space-y-16 mt-32 container mx-auto px-4">
-          {/* Hero Skeleton */}
           <div className="relative rounded-2xl overflow-hidden h-[500px] bg-brand-dark-2 animate-shimmer"></div>
-          {/* Game Section Skeletons */}
           {[1, 2, 3].map(i => (
             <div key={i}>
               <div className="h-8 w-64 bg-brand-dark-2 rounded-md mb-8 animate-shimmer"></div>
@@ -504,7 +461,7 @@ const AppContent: React.FC = () => {
     switch (view.page) {
       case 'game':
         const game = getGameById(view.id || null);
-        if (game) return <div className="mt-32 container mx-auto px-4"><GameDetail game={game} onBack={navigateToHome} currentUser={currentUser} onRequestLogin={() => setIsLoginModalOpen(true)} /></div>;
+        if (game) return <div className="mt-32 container mx-auto px-4"><GameDetail game={game} onBack={navigateToHome} currentUser={currentUser} onRequestLogin={() => setIsUserProfileModalOpen(true)} /></div>;
         navigateToHome();
         return null;
        case 'forum':
@@ -513,7 +470,7 @@ const AppContent: React.FC = () => {
                   onTopicClick={navigateToTopic} 
                   onOpenCreateTopic={() => { setTopicToEdit(null); setIsTopicModalOpen(true); }}
                   currentUser={currentUser}
-                  onRequestLogin={() => setIsLoginModalOpen(true)}
+                  onRequestLogin={() => setIsUserProfileModalOpen(true)}
                   onDeleteTopic={handleDeleteTopic}
                   onEditTopic={handleOpenEditTopicModal}
                 /></div>;
@@ -524,7 +481,7 @@ const AppContent: React.FC = () => {
                             onAddComment={handleAddComment} 
                             onBack={navigateToForum}
                             currentUser={currentUser}
-                            onRequestLogin={() => setIsLoginModalOpen(true)}
+                            onRequestLogin={() => setIsUserProfileModalOpen(true)}
                             onDeleteTopic={handleDeleteTopic}
                             onEditTopic={handleOpenEditTopicModal}
                           /></div>;
@@ -537,14 +494,13 @@ const AppContent: React.FC = () => {
                   onRequestSubmit={handleRequestGame}
                   requestedGames={userRequestedGames}
                   loading={requestedGamesLoading}
-                  onRequestLogin={() => setIsLoginModalOpen(true)}
+                  onRequestLogin={() => setIsUserProfileModalOpen(true)}
                 /></div>;
       case 'home':
       default:
         return (
           <>
-            {settings.showFeaturedSection && <Hero games={featuredGames} onViewGame={navigateToGame} currentUser={currentUser} onRequestLogin={() => setIsLoginModalOpen(true)} />}
-            {/* Added proper margin-top to separate Featured and Main Content */}
+            {settings.showFeaturedSection && <Hero games={featuredGames} onViewGame={navigateToGame} currentUser={currentUser} onRequestLogin={() => setIsUserProfileModalOpen(true)} />}
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-12 relative z-10 pb-12">
                {renderHomePageContent()}
             </div>
@@ -552,21 +508,6 @@ const AppContent: React.FC = () => {
         );
     }
   };
-
-  if (settings.maintenanceMode && currentUser?.role !== 'admin') {
-    return (
-        <div className="bg-brand-dark text-white min-h-screen font-sans flex flex-col items-center justify-center text-center p-8">
-             <div className="p-8 rounded-2xl bg-[#1a102e] border border-white/10 shadow-2xl max-w-lg">
-                <span className="material-symbols-outlined text-6xl text-brand-purple mb-6 animate-bounce">construction</span>
-                <h1 className="text-4xl font-bold mb-4">{settings.siteName[language]} is Under Maintenance</h1>
-                <p className="text-xl text-brand-gray">We are upgrading our systems to provide you with a better experience.</p>
-                <div className="mt-8 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-brand-purple animate-shimmer w-1/2"></div>
-                </div>
-            </div>
-        </div>
-    );
-  }
 
   return (
     <div className="text-white min-h-screen font-sans flex flex-col">
@@ -581,11 +522,9 @@ const AppContent: React.FC = () => {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           currentUser={currentUser}
-          onLoginClick={() => setIsLoginModalOpen(true)}
-          onSignupClick={() => setIsSignupModalOpen(true)}
+          onProfileClick={() => setIsUserProfileModalOpen(true)}
           onLogout={handleUserLogout}
         />
-        {currentUser && !currentUser.isVerified && <EmailVerificationBanner user={currentUser} onResend={handleSendVerification} />}
       
       <main className="flex-grow">
         <div key={view.page + (view.id || '')} className="page-transition">
@@ -593,46 +532,19 @@ const AppContent: React.FC = () => {
         </div>
       </main>
       
-      <LoginModal 
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onLogin={handleUserLogin}
-        onSwitchToSignup={() => {
-            setIsLoginModalOpen(false);
-            setIsSignupModalOpen(true);
-        }}
-        onForgotPassword={() => {
-            setIsLoginModalOpen(false);
-            setIsForgotPasswordModalOpen(true);
-        }}
+      <UserProfileModal 
+        isOpen={isUserProfileModalOpen}
+        onClose={() => setIsUserProfileModalOpen(false)}
+        onSave={handleSaveProfile}
+        currentProfile={profile}
       />
-       <SignupModal 
-        isOpen={isSignupModalOpen}
-        onClose={() => setIsSignupModalOpen(false)}
-        onSignup={handleUserSignup}
-        onSwitchToLogin={() => {
-            setIsSignupModalOpen(false);
-            setIsLoginModalOpen(true);
-        }}
+      
+      <AdminLoginModal
+        isOpen={isAdminLoginModalOpen}
+        onClose={() => setIsAdminLoginModalOpen(false)}
+        onLogin={handleAdminLoginSuccess}
       />
-      <ForgotPasswordModal
-        isOpen={isForgotPasswordModalOpen}
-        onClose={() => setIsForgotPasswordModalOpen(false)}
-        onRequestReset={handleRequestPasswordReset}
-        onSwitchToLogin={() => {
-            setIsForgotPasswordModalOpen(false);
-            setIsLoginModalOpen(true);
-        }}
-      />
-      <ResetPasswordModal
-        isOpen={isResetPasswordModalOpen}
-        onClose={() => {
-            setIsResetPasswordModalOpen(false);
-            setUserToResetPassword(null);
-        }}
-        onReset={handlePasswordReset}
-        userToReset={userToResetPassword}
-      />
+
       <TopicModal
           isOpen={isTopicModalOpen}
           onClose={() => {
@@ -646,8 +558,8 @@ const AppContent: React.FC = () => {
                 if(currentUser){
                   handleAddTopic(data);
                 } else {
-                  showToast('You must be logged in to create a topic.', 'error');
-                  setIsLoginModalOpen(true);
+                  showToast('You must create a profile to create a topic.', 'error');
+                  setIsUserProfileModalOpen(true);
                 }
               }
           }}
@@ -659,7 +571,6 @@ const AppContent: React.FC = () => {
   );
 };
 
-
 const App: React.FC = () => (
   <ToastProvider>
     <LanguageProvider>
@@ -668,6 +579,5 @@ const App: React.FC = () => (
     </LanguageProvider>
   </ToastProvider>
 );
-
 
 export default App;
